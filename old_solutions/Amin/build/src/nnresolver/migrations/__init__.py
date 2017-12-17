@@ -1,0 +1,1 @@
+# This package contains moduls that migrate old databases to new ones. This is auto generated using manage.py makemigrations
