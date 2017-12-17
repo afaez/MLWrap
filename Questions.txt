@@ -1,0 +1,2 @@
+- Should the trained models, queries, results be persistent?
+- Should the service measure the time when doing tasks? 
