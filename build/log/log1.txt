@@ -1,0 +1,256 @@
+Amins-MacBook-Pro:build aminfaez$ cd src/
+Amins-MacBook-Pro:src aminfaez$ ls
+plainlib
+Amins-MacBook-Pro:src aminfaez$ cd plainlib/
+Amins-MacBook-Pro:plainlib aminfaez$ ls
+a.py
+Amins-MacBook-Pro:plainlib aminfaez$ python
+Python 3.6.3 |Anaconda, Inc.| (default, Oct  6 2017, 12:04:38)
+[GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)] on darwin
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import .a
+  File "<stdin>", line 1
+    import .a
+           ^
+SyntaxError: invalid syntax
+>>> import a
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/Users/aminfaez/MLWrap/build/src/plainlib/a.py", line 2
+    Class A:
+          ^
+SyntaxError: invalid syntax
+>>> from a import A
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/Users/aminfaez/MLWrap/build/src/plainlib/a.py", line 2
+    Class A:
+          ^
+SyntaxError: invalid syntax
+>>> from a import A
+>>> method = getattr(A,"calc")
+>>> method
+<function A.calc at 0x104f8a8c8>
+>>> import a
+>>> classname = getattr(a, A)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+TypeError: getattr(): attribute name must be string
+>>> classname = getattr(a, "A")
+>>> classname
+<class 'a.A'>
+>>> instance = classname()
+>>> method(instance, 2)
+5
+>>> instance.method(2)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+AttributeError: 'A' object has no attribute 'method'
+>>> subpackage = getattr(plainlib, "package1)
+  File "<stdin>", line 1
+    subpackage = getattr(plainlib, "package1)
+                                            ^
+SyntaxError: EOL while scanning string literal
+>>> subpackage = getattr(plainlib, "package1!)
+  File "<stdin>", line 1
+    subpackage = getattr(plainlib, "package1!)
+                                             ^
+SyntaxError: EOL while scanning string literal
+>>> subpackage = getattr(plainlib, "package1")
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+NameError: name 'plainlib' is not defined
+>>> subpackage = getattr(., "package1")
+  File "<stdin>", line 1
+    subpackage = getattr(., "package1")
+                         ^
+SyntaxError: invalid syntax
+>>> i = importlib.import_module("package1.b")
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+NameError: name 'importlib' is not defined
+>>> import importlib
+>>> i = importlib.import_module("package1.b")
+>>> i
+<module 'package1.b' from '/Users/aminfaez/MLWrap/build/src/plainlib/package1/b.py'>
+>>> exit()
+Amins-MacBook-Pro:plainlib aminfaez$ python
+Python 3.6.3 |Anaconda, Inc.| (default, Oct  6 2017, 12:04:38)
+[GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)] on darwin
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import importlib
+>>> bMod = importlib.import_module("p")
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/Users/aminfaez/anaconda3/lib/python3.6/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 994, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 971, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 953, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'p'
+>>> bMod = importlib.import_module("packge1.b")
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/Users/aminfaez/anaconda3/lib/python3.6/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 994, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 971, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 941, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 219, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 994, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 971, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 953, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'packge1'
+>>> bMod = importlib.import_module("package1.b")
+>>> import json
+>>> jsonstring = "{"a" : 3, "b" : 1}"
+  File "<stdin>", line 1
+    jsonstring = "{"a" : 3, "b" : 1}"
+                    ^
+SyntaxError: invalid syntax
+>>> jsonstring = "{\"a\" : 3, \"b\" : 1}"
+>>> dict = json.loads(jsonstring)
+>>> dict
+{'a': 3, 'b': 1}
+>>> bInst = bMod(**dict)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+TypeError: 'module' object is not callable
+>>> bMod = importlib.import_module("package1.b.B")
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/Users/aminfaez/anaconda3/lib/python3.6/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 994, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 971, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 950, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'package1.b.B'; 'package1.b' is not a package
+>>> classRef = getattr(bMod, "B")
+>>> bInst = classRef(**dict)
+>>> bInst
+<package1.b.B object at 0x10922b278>
+>>> f"{bInst}"
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/Users/aminfaez/MLWrap/build/src/plainlib/package1/b.py", line 11, in __str__
+    return f"a = {a} b = {b}"
+NameError: name 'a' is not defined
+>>> f"{bInst}"
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/Users/aminfaez/MLWrap/build/src/plainlib/package1/b.py", line 11, in __str__
+    return f"a = {self.a} b = {self.b}"
+NameError: name 'a' is not defined
+>>> exit()
+Amins-MacBook-Pro:plainlib aminfaez$ python
+Python 3.6.3 |Anaconda, Inc.| (default, Oct  6 2017, 12:04:38)
+[GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)] on darwin
+Type "help", "copyright", "credits" or "license" for more information.
+>>> bMod = importlib.import_module("package1.b")
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+NameError: name 'importlib' is not defined
+>>> import importlib
+>>> bMod = importlib.import_module("package1.b")
+>>> classRef = getattr(bMod, "B")
+>>> jsonstring = "{"a" : 3, "b" : 1}"
+  File "<stdin>", line 1
+    jsonstring = "{"a" : 3, "b" : 1}"
+                    ^
+SyntaxError: invalid syntax
+>>> jsonstring = "{\"a\" : 3, \"b\" : 1}"
+>>> import json
+>>> dict = json.loads(jsontring)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+NameError: name 'jsontring' is not defined
+>>> dict = json.loads(jsonstring)
+>>> dict
+{'a': 3, 'b': 1}
+>>> bInst = classRef(**dict)
+>>> bInst
+<package1.b.B object at 0x106dabeb8>
+>>> f"{bInst}"
+'a = 3 b = 1'
+>>> bInst.__dict__
+{'a': 3, 'b': 1}
+>>> exit()
+Amins-MacBook-Pro:plainlib aminfaez$ python
+Python 3.6.3 |Anaconda, Inc.| (default, Oct  6 2017, 12:04:38)
+[GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)] on darwin
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import package1.b
+>>> import b.B, b.A
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ModuleNotFoundError: No module named 'b'
+>>> from b import B
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ModuleNotFoundError: No module named 'b'
+>>> from pacakge.b import B
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ModuleNotFoundError: No module named 'pacakge'
+>>> from package1.b import B
+>>> from package1.b import A
+>>> b = B(1,2)
+>>> a = A(b)
+>>> a.__dict__
+{'B': <package1.b.B object at 0x10d3ea550>}
+>>> b.__dict__
+{'a': 1, 'b': 2}
+>>> import pickle
+>>> from cStringIO import StringIO
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ModuleNotFoundError: No module named 'cStringIO'
+>>>
+>>> src = StringIO()
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+NameError: name 'StringIO' is not defined
+>>> from cStringIO import StringIO
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ModuleNotFoundError: No module named 'cStringIO'
+>>> from StringIO import StringIO
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ModuleNotFoundError: No module named 'StringIO'
+>>> exit()
+Amins-MacBook-Pro:plainlib aminfaez$ pip install cStringIO
+Collecting cStringIO
+  Could not find a version that satisfies the requirement cStringIO (from versions: )
+No matching distribution found for cStringIO
+Amins-MacBook-Pro:plainlib aminfaez$ python
+Python 3.6.3 |Anaconda, Inc.| (default, Oct  6 2017, 12:04:38)
+[GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)] on darwin
+Type "help", "copyright", "credits" or "license" for more information.
+>>> from io.cStringIO import DtringIO
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ModuleNotFoundError: No module named 'io.cStringIO'; 'io' is not a package
+>>> from io.cStringIO import StringIO
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ModuleNotFoundError: No module named 'io.cStringIO'; 'io' is not a package
+>>> import io
+>>> import io.cStringIO
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ModuleNotFoundError: No module named 'io.cStringIO'; 'io' is not a package
+>>> import io.StringIO
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ModuleNotFoundError: No module named 'io.StringIO'; 'io' is not a package
+>>> from io import StringIO
+>>> src = StringIO()
+>>> p = pickle.Pickler(src)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+NameError: name 'pickle' is not defined
+>>> import pickle
+>>> src = StringIO()
+>>> p = pickle.Pickler(src)
+>>>
