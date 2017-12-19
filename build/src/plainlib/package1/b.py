@@ -1,5 +1,8 @@
 
 class B:
+    """ Dummy class B.
+    Contains 2 numbers: a and b.
+    """
     def __init__(self, a , b):
         self.a = a
         self.b = b
@@ -11,5 +14,8 @@ class B:
         return f"a = {self.a} b = {self.b}"
 
 class A:
-    def __init__(self, B):
-        self.B = B
+    """ Dummy class A.
+    References any object.
+    """
+    def __init__(self, ref):
+        self.ref = ref
