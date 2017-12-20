@@ -1,6 +1,6 @@
 
 class A:
-    def __init__(self):
+    def __init__(self, a):
         self.a = 1
         self.b = 2
     
