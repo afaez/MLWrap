@@ -5,10 +5,10 @@ import pase.constants.error_msg as error
 import jsonpickle
 
 def _topath(class_name):
-    return  class_name
+    return  "data/" + class_name
 
 def _tofilepath(class_name, id):
-    return class_name + "/" + id
+    return "data/" + class_name + "/" + id
 
 def _do_error_checks(class_name, instance, id = None):
     """ Private function that checks if parameters are chosen without errors.
