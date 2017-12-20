@@ -5,7 +5,7 @@ def construct(module_name, class_name, parameter):
         module = importlib.import_module(module_name)
         clazz = getattr(module, clazz)
         instance = clazz(**parameter)
-    except: Exception e
+    except Exception as e:
         printf(f"{e}")
         raise e
 

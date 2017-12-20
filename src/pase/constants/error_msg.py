@@ -1,4 +1,4 @@
-import const
+from . import const
 
 const.not_a_string = "{} is not a string."
 

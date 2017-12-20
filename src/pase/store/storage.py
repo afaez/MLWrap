@@ -1,7 +1,7 @@
 # This module 
 import os
 import uuid 
-import pase.constants.error_msg as error
+import src.pase.constants.error_msg as error
 import jsonpickle
 
 def _topath(class_name):
@@ -15,7 +15,7 @@ def _do_error_checks(class_name, instance, id = None):
     """
      # Boundary checks.
     if(not isinstance(class_name, str) ):
-        raise ValueError(error.const.not_a_string.format(f"class_name={class_name}")))
+        raise ValueError(error.const.not_a_string.format(f"class_name={class_name}"))
 
     # The path to the instance.
     path = _topath(class_name)
@@ -23,7 +23,7 @@ def _do_error_checks(class_name, instance, id = None):
     os.makedirs(path, exist_ok = True)
     # If id is given we need to check if the instance was saved before. (The storage module is the one who defines ids)
     if id is not None:
-        if(not os.path.isfile(_tofilepath(class_name, id)):
+        if(not os.path.isfile(_tofilepath(class_name, id))):
             raise ValueError(error.const.instance_with_id_doesnt_exist.format(f"{instance}", class_name, id))
 
 
@@ -37,10 +37,10 @@ def save(class_name, instance, id = None):
     """
     # Check for boundry errors.
     _do_error_checks(class_name, instance, id)
-    if(instance is None)
+    if(instance is None):
         raise ValueError(error.const.is_null.format("instance"))
     if(not isinstance(instance, class_name)):
-        raise ValueError(error.const.not_subtype.format(f"{instance}", class_name)
+        raise ValueError(error.const.not_subtype.format(f"{instance}", class_name))
 
     # The path to the instance.
     # Instances are stored in a subfolder named after the type's name.
