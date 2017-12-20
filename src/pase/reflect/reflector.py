@@ -3,10 +3,10 @@ import importlib
 def construct(module_name, class_name, parameter):
     try:
         module = importlib.import_module(module_name)
-        clazz = getattr(module, clazz)
+        clazz = getattr(module, class_name)
         instance = clazz(**parameter)
     except Exception as e:
-        printf(f"{e}")
+        print(f"{e}")
         raise e
 
     return instance

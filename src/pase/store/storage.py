@@ -1,7 +1,7 @@
 # This module 
 import os
 import uuid 
-import src.pase.constants.error_msg as error
+import pase.constants.error_msg as error
 import jsonpickle
 
 def _topath(class_name):
@@ -39,8 +39,8 @@ def save(class_name, instance, id = None):
     _do_error_checks(class_name, instance, id)
     if(instance is None):
         raise ValueError(error.const.is_null.format("instance"))
-    if(not isinstance(instance, class_name)):
-        raise ValueError(error.const.not_subtype.format(f"{instance}", class_name))
+    #if(not isinstance(instance, class_name)):
+    #    raise ValueError(error.const.not_subtype.format(f"{instance}", class_name))
 
     # The path to the instance.
     # Instances are stored in a subfolder named after the type's name.
