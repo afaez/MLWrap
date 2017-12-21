@@ -27,7 +27,7 @@ def create(class_path):
     return return_json
 
 
-@app.route("/<class_path>/<id>/<method_name>", methods=['POST', 'GET'])
+@app.route("/<class_path>/<id>/<method_name>", methods=['POST', 'PUT'])
 def call_method(class_path, id, method_name):
     # Parse the parameters from the body:
     body = request.get_json()
@@ -41,8 +41,8 @@ def call_method(class_path, id, method_name):
     except ValueError as ve:
         return f"{ve}"
 
-    # Change the state of the instance if HTTP method is POST. (GET guarantees that the state doesn't change.)
-    if request.method == 'POST':
+    # Change the state of the instance if HTTP method is PUT. (POST guarantees that the state doesn't change.)
+    if request.method == 'PUT':
         store.save(class_path, instance, id)
 
     return_dict = {"return": return_val}
