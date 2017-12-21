@@ -12,7 +12,12 @@ def create(class_path):
     class_name = class_path.split(".")[-1]
     package = class_path[:-len(class_name) - 1]
     body = request.get_json()
-    instance = reflect.construct(package, class_name, body)
+    # Create the instance objects:
+    try:
+        instance = reflect.construct(package, class_name, body)
+    except ValueError as ve:
+        return f"{ve}"
+    # Save the instance object and create a new id:
     id = store.save(class_path, instance)
     return_dict = {"id" : id}
     return_json = json.dumps(return_dict)
@@ -31,7 +36,10 @@ def call_method(class_path, id, method_name):
     instance = store.restore(class_path, id)
 
     # Call the requested function or attribute:
-    return_val = reflect.call(instance, method_name, body)
+    try:
+        return_val = reflect.call(instance, method_name, body)
+    except ValueError as ve:
+        return f"{ve}"
 
     # Change the state of the instance if HTTP method is POST. (GET guarantees that the state doesn't change.)
     if request.method == 'POST':

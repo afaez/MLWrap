@@ -8,7 +8,7 @@ const.not_subtype = "{} is not of type {}."
 
 const.instance_with_id_doesnt_exist = "{} of type {} with id {} does not exist."
 
-const.parameter_is_mandatory = "There is no default set for the paramter {} from method = {}"
+const.parameter_is_mandatory = "There is no default set for the paramter {}."
 
 const.module_not_found = "The requested module was not found: {}"
 

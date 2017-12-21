@@ -1,4 +1,5 @@
 from importlib import import_module # used to dereference module names. see function: construct
+import inspect
 from inspect import signature # used to inspect function signature. see function: _validate_parameters
 
 
@@ -17,15 +18,15 @@ def _validate_parameters(given_param, callable_):
     """
      # Now create a validated dictionary based on the signature from the method: 
     validated_dict = {}
-    signature_ = signature(method_)
+    signature_ = signature(callable_)
     # iterate over every parameter:
-    for param_key in signature.parameters:
-        if(param_key in parameters):
+    for param_key in signature_.parameters:
+        if(param_key in given_param):
             # Copy parameters to the validated dictionary:
-            validated_dict[param_key] = parameters[param_key]
-        else if(signature.parameters[param_key].default == inspect._empty): # No default is set.
+            validated_dict[param_key] = given_param[param_key]
+        elif(signature_.parameters[param_key].default == inspect._empty): # No default is set.
             # The parameter wasn't sent by the client. 
-            raise ValueError(error.const.parameter_is_mandatory.format(param_key, method_name))
+            raise ValueError(error.const.parameter_is_mandatory.format(f"{param_key}"))
 
     return validated_dict
     
@@ -43,13 +44,13 @@ def construct(module_name, class_name, parameters):
         # Validate the parameters:
         validated_params = _validate_parameters(parameters, clazz)
         # Call the constructor:
-        instance = clazz(**parameter)
+        instance = clazz(**validated_params)
     except ModuleNotFoundError as e:
         print(f"{e}")
         raise ValueError(error.const.module_not_found.format(module_name))
     except AttributeError as e:
         print(f"{e}")
-        raise ValueError(error.const.class_not_found_in_module.format( class_name, module_name))
+        raise e #ValueError(error.const.class_not_found_in_module.format( class_name, module_name))
     
 
 
