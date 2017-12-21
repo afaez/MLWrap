@@ -67,6 +67,14 @@ def save(class_name, instance, id = None):
     return id
 
 def restore(class_name, id):
+    # Retrieve the json serialized state
+    jsonstring = restore_state(class_name, id)
+    
+    # Decode and return the instance.
+    instance = jsonpickle.decode(jsonstring)
+    return instance
+
+def restore_state(class_name, id):
     # Boundary checks.
     _do_error_checks(class_name, None, id)
     # restore needs id to be assigend.
@@ -79,6 +87,4 @@ def restore(class_name, id):
     file = open(path, "r") 
     jsonstring = file.read()
     file.close()
-    
-    instance = jsonpickle.decode(jsonstring)
-    return instance
+    return jsonstring

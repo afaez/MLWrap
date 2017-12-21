@@ -19,6 +19,8 @@ def _validate_parameters(given_param, callable_):
      # Now create a validated dictionary based on the signature from the method: 
     validated_dict = {}
     signature_ = signature(callable_)
+    if(given_param is None):
+        given_param = {}
     # iterate over every parameter:
     for param_key in signature_.parameters:
         if(param_key in given_param):
@@ -80,7 +82,7 @@ def call(instance, method_name, parameters = {}):
     if(callable(attribute_)) :
         method_ = attribute_
         validated_params = _validate_parameters(parameters, method_)
-        returned_val = method_(**validated_dict)
+        returned_val = method_(**validated_params)
     # Else the attribute might actually be a field. Return it's value:
     else :
         returned_val = attribute_

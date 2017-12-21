@@ -1,1 +1,1 @@
-from .storage import save, restore
+from .storage import save, restore, restore_state
