@@ -3,6 +3,8 @@ from flask import request
 import json
 from pase import store as store
 from pase import reflect as reflect
+import pase.params.config as config
+import pase.constants.error_msg as error
 
 app = Flask(__name__)
 import jsonpickle.ext.numpy as jsonpickle_numpy
@@ -12,6 +14,8 @@ jsonpickle_numpy.register_handlers()
 
 @app.route("/<class_path>", methods=['POST'])
 def create(class_path):
+    if not config.is_in_whitelist(class_path):
+        return error.const.class_is_not_accessible.format(class_path)
     package, class_name = get_package_and_class_name(class_path)
     # Request body contains constructor parameters
     body = request.get_json()

@@ -15,3 +15,7 @@ const.module_not_found = "The requested module was not found: {}"
 const.class_not_found_in_module = "The class = {} was not found within the module = {}"
 
 const.cannot_construct_class_name = "Cannot access the constructor from class = {} within module = {}"
+
+const.environment_variable_is_not_set = "Environment variable {} is not set."
+
+const.class_is_not_accessible = "The class = {} is not authorized for access."
