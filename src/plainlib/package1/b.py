@@ -11,7 +11,13 @@ class B:
         return self.a + self.b * c
     
     def __str__(self):
-        return f"a = {self.a} b = {self.b}"
+        return "a = {} b = {}".format(self.a, self.b)
+
+    @classmethod
+    def random(cls):
+        from random import randint
+        b = B(randint(0, 9), randint(0, 9))
+        return b
 
 class A:
     """ Dummy class A.

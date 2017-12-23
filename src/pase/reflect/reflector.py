@@ -1,9 +1,10 @@
-from importlib import import_module # used to dereference module names. see function: construct
 import inspect
-from inspect import signature # used to inspect function signature. see function: _validate_parameters
+from importlib import \
+    import_module  # used to dereference module names. see function: construct
+from inspect import \
+    signature  # used to inspect function signature. see function: _validate_parameters
 
-
-import pase.constants.error_msg as error # Contains error messages constants.
+import pase.constants.error_msg as error  # Contains error messages constants.
 
 
 def _validate_parameters(given_param, callable_):
@@ -31,33 +32,62 @@ def _validate_parameters(given_param, callable_):
             raise ValueError(error.const.parameter_is_mandatory.format(f"{param_key}"))
 
     return validated_dict
+
+def fullname(o):
+    """ Get fully qualified class name of an object o.
+    """
+    return o.__module__ + "." + o.__class__.__name__
     
     
-def construct(module_name, class_name, parameters):
-    """ Dereferences a module by its module_name and dereferences a class from module by its class_name and calls constructs it using the given paramters.
+def construct(package_path, parameters):
+    """ Dereferences a callable by its package_path and calls it using the given parameters.
     """ 
-    try:
-        # Import the requested module:
-        module = import_module(module_name)
-        # 
-        clazz = getattr(module, class_name)
+    def traverse_package(package_path, package_string = ""):
+        """ Recursively traverses package_path list and calls traverse_module.
+        """
+        package_string = package_string + package_path[0]
+        package_path = package_path[1:]
+        if not package_path:
+            return None
+        package = import_module(package_string)
+        attribute = package_path[0]
+        if hasattr(package, attribute):
+            module = traverse_module(package_path[1:], getattr(package, attribute))
+            if module:
+                return module
+        else:
+            return traverse_package(package_path, package_string + ".")
+
+
+    def traverse_module(package_path, module):
+        """ Recursevly traverses package_path until it its empty and the module is found. Else None is returned.
+        """
+        if not package_path:
+            return module
+        attribute = package_path[0]
+        if hasattr(module, attribute):
+            return traverse_module(package_path[1:], getattr(module, attribute))
+        else:
+            return None
+    
+    
+    module = traverse_package(package_path)
+    if not module:
+        # No module found.
+        raise ValueError(error.const.module_not_found.format(".".join(package_path)))
+    try: 
+        clazz = module
         if(not callable(clazz)):
-            raise ValueError(error.const.cannot_construct_class_name.format(class_name, module_name))
+            raise ValueError(error.const.cannot_construct_class_name.format(clazz.__name__,".".join(package_path)))
         # Validate the parameters:
         validated_params = _validate_parameters(parameters, clazz)
         # Call the constructor:
         instance = clazz(**validated_params)
-    except ModuleNotFoundError as e:
-        print(f"{e}")
-        raise ValueError(error.const.module_not_found.format(module_name))
+        return instance, fullname(instance)
     except AttributeError as e:
         print(f"{e}")
         raise e #ValueError(error.const.class_not_found_in_module.format( class_name, module_name))
     
-
-
-
-    return instance
 
 def call(instance, method_name, parameters = {}):
     """ call is used to access a instance's method or field.
@@ -85,6 +115,8 @@ def call(instance, method_name, parameters = {}):
         returned_val = method_(**validated_params)
     # Else the attribute might actually be a field. Return it's value:
     else :
-        returned_val = attribute_
+        if "value" in parameters:
+            setattr(instance, method_name, parameters["value"])
+        returned_val = getattr(instance, method_name)
 
     return returned_val
