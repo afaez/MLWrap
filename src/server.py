@@ -105,5 +105,14 @@ def _serialize_output(output):
         return_json = jsonpickle.dumps(output, unpicklable=False)
     return return_json
 
+if __name__ == '__main__':
+    # Retrieve the command line argument to use as a port number.
+    port_ = 5000 
+    try:
+        import sys
+        port_ = int(sys.argv[1]) # port is the first command line argument.
+    except:
+        pass
+    # Run the server
+    app.run(host='localhost', port=port_, debug = config.DEBUGGING)
 
-app.run(debug=config.DEBUGGING)
