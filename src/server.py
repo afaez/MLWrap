@@ -41,12 +41,12 @@ def create(class_path):
     return return_json
 
 
-@app.route("/<class_path>/safe/<id>/<method_name>", methods=['POST', 'PUT', 'GET'])
+@app.route("/<class_path>/safe/<id>/<method_name>", methods=['POST', 'GET'])
 def call_method_(class_path, id, method_name):
     # This route guarantees that the state of the object doesn't change.
     return call_method(class_path, id, method_name, save = False)
 
-@app.route("/<class_path>/<id>/<method_name>", methods=['POST', 'PUT', 'GET'])
+@app.route("/<class_path>/<id>/<method_name>", methods=['POST', 'GET'])
 def call_method(class_path, id, method_name, save = True):
     # Parse the parameters from the body:
     if request.method != 'GET'  :
@@ -105,5 +105,14 @@ def _serialize_output(output):
         return_json = jsonpickle.dumps(output, unpicklable=False)
     return return_json
 
+if __name__ == '__main__':
+    # Retrieve the command line argument to use as a port number.
+    port_ = 5000 
+    try:
+        import sys
+        port_ = int(sys.argv[1]) # port is the first command line argument.
+    except:
+        pass
+    # Run the server
+    app.run(host='localhost', port=port_, debug = config.DEBUGGING)
 
-app.run(debug=config.DEBUGGING)

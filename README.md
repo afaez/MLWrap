@@ -15,10 +15,10 @@ array([ 0.5,  0.5])
 array([ 0.75,  0.75])
 ```
 
-The same operation can be realised using a Pase-service.
+The same operations can be realised using a Pase-service.
 Assume the server is accessible through `localhost:5000/`.
 
-First create the `LinearRegression` object `reg = sklearn.linear_model.LinearRegression(normalize=True)` with the following the http request:
+First create the `LinearRegression` object `reg = sklearn.linear_model.LinearRegression(normalize=True)` with the following http request:
 
 ```
 POST /sklearn.linear_model.LinearRegression HTTP/1.1
@@ -30,7 +30,7 @@ Content-Type: application/json
 
 The server then returns this JSON-string: `{"id": "85F09D2E65", "class": "sklearn.linear_model.base.LinearRegression"}`
 
-Now the client can access the `LinearRegression` instance's attributes and methods through this url:
+Now the client can access `LinearRegression` instance's attributes and methods through this url:
 
 `localhost:5000/sklearn.linear_model.base.LinearRegression/85F09D2E65`
 
@@ -61,4 +61,67 @@ Content-Type: application/json
 ```
 Server response: `{"dtype": "float64", "values": [0.75, 0.75]}`
 
+# Installation
+To create a Pase-service clone this repository and run `bash service.sh`
 
+The shell script resolves dependencies and checks if at least Python 3.6 is used. Afterwards it makes the server available on the port specified by the command line parameter. (e.g.: `bash service.sh 200`)
+
+Make sure libraries that are used by the client are accessible by the server. To create the `LinearRegression` object from above the scikit-learn framework is needed. One option is to add install commands to the first bracket of `service.sh`. e.g. adding `pip install sklearn` makes the scikit-learn framework available.
+
+# Configuration
+`conf/whitelist.ini` contains constructors that are allowed to be created by clients.
+To whitelist a constructor, add a new line consisting of the fully qualified constructor name followed by a equal sign followed by True.
+
+If debug = True is specified in `whitelist.ini`, debug mode is enabled. Consequently:
+* Flask is started in debug mode.
+* No whitelist checks are made. Thus every constructor can be created through http calls.
+
+# API Reference
+Say `<ip>` accesses the running pase server.
+
+## Creation
+Creating objects using constructor or class-methods:
+
+method = `POST`
+
+url = `<ip>\<fully-qualified-contructor-name>`
+
+body = JSON encoded parameters for the constructor. JSON variable names need to be identical to the parameter names in python.
+
+returns = JSON with two values: "id", "class"
+
+Use `<ip>\<class>\<id>` to access the created object.
+
+## State
+Retrieving object state:
+
+method = `GET`
+
+url = `<ip>\<class>\<id>`
+
+returns = JSON encoded state of the object
+
+## Attribute
+Retrieve or set the value of a object's attribute (called `<attr>`):
+
+method = `GET` (to retrieve value), `POST` (to retrieve or set value)
+
+url = `<ip>\<class>\<id>\<attr>`
+
+body (if `POST`) = JSON encoded parameter. Map `"value"` to the expected value. e.g.: `{"value" : 10}`
+
+returns = JSON encoded value of the accessed attribute (value after assignment)
+
+## Function
+Call a function called `<func>`:
+
+method = `POST`
+
+url = `<ip>\<class>\<id>\<func>`
+
+body = JSON encoded parameters for the function. JSON variable names need to be identical to the parameter names in python.
+
+returns = JSON encoded return value of the function call
+
+## Safe access
+To guarantee that the state of the object doesn't change after calling methods or accessing attributes  operate like above but use the following urls instead: `<ip>\<class>\safe\<id>\<attr>`, `<ip>\<class>\safe\<id>\<func>` 
