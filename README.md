@@ -3,7 +3,7 @@ Python API Service Envirenment.
 This project offers a web server which offers access to python libraries with communication through JSON. 
 
 # Code Example
-Take a look at the following peace of python code:
+Take a look at the following piece of python code:
 ```
 >>> import sklearn.linear_model
 >>> reg = sklearn.linear_model.LinearRegression(normalize=True)
