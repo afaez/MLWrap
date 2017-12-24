@@ -18,8 +18,8 @@ jsonpickle_numpy.register_handlers()
 def create(class_path):
     # Check if requested class is in the configuration whitelist.
     if not config.is_in_whitelist(class_path):
-        #return error.const.class_is_not_accessible.format(class_path), status.HTTP_405_METHOD_NOT_ALLOWED
-        pass
+        return error.const.class_is_not_accessible.format(class_path), status.HTTP_405_METHOD_NOT_ALLOWED
+        
 
     # Split the class_path into a list of paths.
     path_list = _split_packages(class_path)
@@ -53,20 +53,21 @@ def call_method(class_path, id, method_name, save = True):
         params = request.get_json()
     else: 
         params = {}
+        save = False # Get doesn't change server state.
     try:
         # Recover the instance from the memory:
         instance = store.restore(class_path, id)
 
         # Call the requested function or attribute:
         return_value = reflect.call(instance, method_name, params)
-    except ValueError as ve:
-        return f"{ve}", status.HTTP_400_BAD_REQUEST
+    except Exception as ex:
+        return f"{ex}", status.HTTP_400_BAD_REQUEST
 
-    # Change the state of the instance if HTTP method is PUT. 
+    # Change the state of the instance if HTTP method is PUT.
     # (POST guarantees that the state doesn't change.)
     if save:
         store.save(class_path, instance, id)
-    
+
     # Parse the output to json.
     return_json = _serialize_output(return_value)
 
@@ -83,7 +84,7 @@ def retrieve_state(class_path, id):
 
     except ValueError as ve:
         return f"{ve}"
-    
+
     return _serialize_output(instance)
 
 
@@ -105,4 +106,4 @@ def _serialize_output(output):
     return return_json
 
 
-app.run(debug = config.DEBUGGING)
+app.run(debug=config.DEBUGGING)
