@@ -62,6 +62,65 @@ Content-Type: application/json
 Server response: `{"dtype": "float64", "values": [0.75, 0.75]}`
 
 # Installation
-To create a Pase-service clone this repository and run `bash service.sh` 
+To create a Pase-service clone this repository and run `bash service.sh`
 
+The shell script resolves dependencies and checks if at least Python 3.6 is used. Afterwards it makes the server available on the port specified by the command line parameter. (e.g.: `bash service.sh 200`)
 
+Make sure libraries that are used by the client are accessible by the server. To create the `LinearRegression` object from above the scikit-learn framework is needed. One option is to add install commands to the first bracket of `service.sh`. e.g. adding `pip install sklearn` makes the scikit-learn framework available.
+
+# Configuration
+'conf/whitelist.ini' contains constructors that are allowed to be created by clients.
+To whitelist a constructor, add a new line consisting of the fully qualified constructor name followed by a equal sign followed by True.
+If debug = True is specified in `whitelist.ini`, debug mode is enabled. Consequently:
+* Flask is started in debug mode.
+* No whitelist checks are made. Thus every constructor can be created through http calls.
+
+# API Reference
+Say `<ip>` accesses the running pase server.
+
+## Creation
+Creating objects using a constructor or class-methods:
+
+method = `POST`
+
+url = `<ip>\<fully-qualified-contructor-name>`
+
+body = JSON encoded parameters for the constructor. JSON variable names need to be identical to the parameter names in python.
+
+returns = JSON with two values: "id", "class"
+
+Use `<ip>\<class>\<id>` to access the created object.
+
+## State
+Retrieving object state:
+
+method = `GET`
+
+url = `<ip>\<class>\<id>`
+
+returns = JSON encoded state of the objcet
+
+## Access attribute
+Retrieve or set the value of a object's attribute with the name `<attr>`:
+
+method = `GET` (to retrieve value), `POST` (to retrieve or set value)
+
+url = `<ip>\<class>\<id>\<attr>`
+
+body (if `POST`) = JSON encoded parameter using `"value"` as tag: `{"value" : 10}`
+
+returns = JSON encoded value of the accessed attribute (after the call)
+
+## Call method
+Call a function called `<func>`:
+
+method = `POST`
+
+url = `<ip>\<class>\<id>\<func>`
+
+body = JSON encoded parameters for the function. JSON variable names need to be identical to the parameter names in python.
+
+returns = JSON encoded return value of the function call
+
+## Safe access
+To guarantee that the state of the object doesn't change after calling methods or accessing attributes use operate like above but use the following urls instead: `<ip>\<class>\safe\<id>\<attr>`, `<ip>\<class>\safe\<id>\<func>` 

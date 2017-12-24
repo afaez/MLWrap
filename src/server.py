@@ -41,12 +41,12 @@ def create(class_path):
     return return_json
 
 
-@app.route("/<class_path>/safe/<id>/<method_name>", methods=['POST', 'PUT', 'GET'])
+@app.route("/<class_path>/safe/<id>/<method_name>", methods=['POST', 'GET'])
 def call_method_(class_path, id, method_name):
     # This route guarantees that the state of the object doesn't change.
     return call_method(class_path, id, method_name, save = False)
 
-@app.route("/<class_path>/<id>/<method_name>", methods=['POST', 'PUT', 'GET'])
+@app.route("/<class_path>/<id>/<method_name>", methods=['POST', 'GET'])
 def call_method(class_path, id, method_name, save = True):
     # Parse the parameters from the body:
     if request.method != 'GET'  :
