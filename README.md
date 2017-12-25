@@ -77,27 +77,27 @@ If debug = True is specified in `whitelist.ini`, debug mode is enabled. Conseque
 * No whitelist checks are made. Thus every constructor can be created through http calls.
 
 # API Reference
-Say `<ip>` accesses the running pase server.
+Say `<host>` accesses the running pase server.
 
 ## Creation
 Creating objects using constructor or class-methods:
 
 method = `POST`
 
-url = `<ip>\<fully-qualified-contructor-name>`
+url = `<host>\<fully-qualified-contructor-name>`
 
 body = JSON encoded parameters for the constructor. JSON variable names need to be identical to the parameter names in python.
 
 returns = JSON with two values: "id", "class"
 
-Use `<ip>\<class>\<id>` to access the created object.
+Use `<host>\<class>\<id>` to access the created object.
 
 ## State
 Retrieving object state:
 
 method = `GET`
 
-url = `<ip>\<class>\<id>`
+url = `<host>\<class>\<id>`
 
 returns = JSON encoded state of the object
 
@@ -106,7 +106,7 @@ Retrieve or set the value of a object's attribute (called `<attr>`):
 
 method = `GET` (to retrieve value), `POST` (to retrieve or set value)
 
-url = `<ip>\<class>\<id>\<attr>`
+url = `<host>\<class>\<id>\<attr>`
 
 body (if `POST`) = JSON encoded parameter. Map `"value"` to the expected value. e.g.: `{"value" : 10}`
 
@@ -117,11 +117,11 @@ Call a function called `<func>`:
 
 method = `POST`
 
-url = `<ip>\<class>\<id>\<func>`
+url = `<host>\<class>\<id>\<func>`
 
 body = JSON encoded parameters for the function. JSON variable names need to be identical to the parameter names in python.
 
 returns = JSON encoded return value of the function call
 
 ## Safe access
-To guarantee that the state of the object doesn't change after calling methods or accessing attributes  operate like above but use the following urls instead: `<ip>\<class>\safe\<id>\<attr>`, `<ip>\<class>\safe\<id>\<func>` 
+To guarantee that the state of the object doesn't change after calling methods or accessing attributes  operate like above but use the following urls instead: `<host>\<class>\safe\<id>\<attr>`, `<host>\<class>\safe\<id>\<func>` 
