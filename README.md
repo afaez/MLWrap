@@ -79,7 +79,7 @@ If debug = True is specified in `whitelist.ini`, debug mode is enabled. Conseque
 # API Reference
 Say `<host>` accesses the running pase server.
 
-## Creation
+### Creation
 Creating objects using constructor or class-methods:
 
 method = `POST`
@@ -92,7 +92,7 @@ returns = JSON with two values: "id", "class"
 
 Use `<host>\<class>\<id>` to access the created object.
 
-## State
+### State
 Retrieving object state:
 
 method = `GET`
@@ -101,7 +101,7 @@ url = `<host>\<class>\<id>`
 
 returns = JSON encoded state of the object
 
-## Attribute
+### Attribute
 Retrieve or set the value of a object's attribute (called `<attr>`):
 
 method = `GET` (to retrieve value), `POST` (to retrieve or set value)
@@ -112,7 +112,7 @@ body (if `POST`) = JSON encoded parameter. Map `"value"` to the expected value. 
 
 returns = JSON encoded value of the accessed attribute (value after assignment)
 
-## Function
+### Function
 Call a function called `<func>`:
 
 method = `POST`
