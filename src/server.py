@@ -38,7 +38,7 @@ def create(class_path):
     id = store.save(class_name, instance)
     return_dict = {"id": id, "class": class_name}
     return_json = json.dumps(return_dict)
-    return return_json
+    return return_json, {'Content-Type': 'application/json'}
 
 
 @app.route("/<class_path>/safe/<id>/<method_name>", methods=['POST', 'GET'])
@@ -71,7 +71,7 @@ def call_method(class_path, id, method_name, save = True):
     # Parse the output to json.
     return_json = _serialize_output(return_value)
 
-    return return_json
+    return return_json, {'Content-Type': 'application/json'}
 
 
 @app.route("/<class_path>/<id>", methods=['GET'])
@@ -85,7 +85,7 @@ def retrieve_state(class_path, id):
     except ValueError as ve:
         return f"{ve}"
 
-    return _serialize_output(instance)
+    return _serialize_output(instance), {'Content-Type': 'application/json'}
 
 
 def _split_packages(class_path):
