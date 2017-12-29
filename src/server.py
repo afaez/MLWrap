@@ -2,6 +2,7 @@ from flask import Flask
 from flask import request
 from flask_api import status
 import json
+import numpy
 import jsonpickle
 from pase import store as store
 from pase import reflect as reflect
@@ -97,6 +98,8 @@ def _serialize_output(output):
     """ Returns the json serialized output of function calls which is sent back to clients:
     """
     # TODO: How should we return the return value?
+    if isinstance(output, numpy.ndarray):
+        output = output.tolist()
     try:
         # If it is json serializable, do it:
         return_json = json.dumps(output)
