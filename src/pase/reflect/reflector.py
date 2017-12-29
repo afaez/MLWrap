@@ -36,7 +36,11 @@ def _validate_parameters(given_param, callable_):
 def fullname(o):
     """ Get fully qualified class name of an object o.
     """
-    return o.__module__ + "." + o.__class__.__name__
+    try:
+        return o.__module__ + "." + o.__class__.__name__
+    except AttributeError: # o object has no attribute '__module__'
+        return o.__class__.__name__
+
     
     
 def construct(package_path, parameters):
