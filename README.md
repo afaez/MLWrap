@@ -114,6 +114,7 @@ body (if `POST`) = JSON encoded parameter. Map `"value"` to the expected value. 
 returns = JSON encoded value of the accessed attribute (value after assignment)
 
 ### Function
+
 Call a function called `<func>`:
 
 method = `POST`
@@ -124,5 +125,28 @@ body = JSON encoded parameters for the function. JSON variable names need to be 
 
 returns = JSON encoded return value of the function call
 
-## Safe access
-To guarantee that the state of the object doesn't change after calling methods or accessing attributes  operate like above but use the following urls instead: `<host>\<class>\safe\<id>\<attr>`, `<host>\<class>\safe\<id>\<func>` 
+## Access modifiers
+
+Access modifiers are url alterations that modify the server behaviour. Use access modifier names after `<class>` and before `<id>` in urls.
+
+### Safe access modifier
+
+To guarantee that the state of the object doesn't change after calling methods or accessing attributes  operate like above but use the following urls instead: 
+
+`<host>\<class>\safe\<id>\<attr>`
+
+`<host>\<class>\safe\<id>\<func>`
+
+### Copy access modifier
+
+Use 'copy' when you want to clone an instance:
+
+`GET <host>\<class>\copy\<id>`
+
+Use 'copy' while accessing an attribute or calling a method (the same way done above) to copy the (result)value to a new instance object:
+
+`<host>\<class>\copy\<id>\<attr>`
+
+`<host>\<class>\copy\<id>\<func>`
+
+The response from a copy access is identical to the response from Creation.
