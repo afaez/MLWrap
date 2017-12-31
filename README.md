@@ -3,7 +3,7 @@
 Python API Service Envirenment. 
 This project offers a web server which offers access to python libraries with communication through JSON. 
 
-# Code Example
+## Code Example
 Take a look at the following piece of python code:
 ```
 >>> import sklearn.linear_model
@@ -50,7 +50,7 @@ Retrieving the value of `reg.coef_` can be done with a `GET` request:
 GET /sklearn.linear_model.base.LinearRegression/85F09D2E65/coef_ HTTP/1.1
 Host: localhost:5000
 ```
-Server response: `{"dtype": "float64", "values": [0.5, 0.5]}`
+Server response: `[0.5, 0.5]`
 
 Returning the result of `reg.predict(X = [[0.5,1],[1,0.5]])` is done similarly to the `fit` call from before:
 ```
@@ -60,24 +60,26 @@ Content-Type: application/json
 
 {"X" : [[0.5, 1], [1, 0.5]]}
 ```
-Server response: `{"dtype": "float64", "values": [0.75, 0.75]}`
+Server response: `[0.75, 0.75]`
 
-# Installation
+## Installation
+
 To create a Pase-service clone this repository and run `bash service.sh`
 
 The shell script resolves dependencies and checks if at least Python 3.6 is used. Afterwards it makes the server available on the port specified by the command line parameter. (e.g.: `bash service.sh 200`)
 
 Make sure libraries that are used by the client are accessible by the server. To create the `LinearRegression` object from above the scikit-learn framework is needed. One option is to add install commands to the first bracket of `service.sh`. e.g. adding `pip install sklearn` makes the scikit-learn framework available.
 
-# Configuration
+## Configuration
 `conf/whitelist.ini` contains constructors that are allowed to be created by clients.
 To whitelist a constructor, add a new line consisting of the fully qualified constructor name followed by a equal sign followed by True.
 
 If debug = True is specified in `whitelist.ini`, debug mode is enabled. Consequently:
+
 * Flask is started in debug mode.
 * No whitelist checks are made. Thus every constructor can be created through http calls.
 
-# API Reference
+## API Reference
 Say `<host>` accesses the running pase server.
 
 ### Creation
@@ -124,6 +126,8 @@ url = `<host>\<class>\<id>\<func>`
 body = JSON encoded parameters for the function. JSON variable names need to be identical to the parameter names in python.
 
 returns = JSON encoded return value of the function call
+
+(Note that resulting numpy arrays will be converted to lists (arrays))
 
 ## Access modifiers
 
