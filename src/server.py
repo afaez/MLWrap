@@ -9,13 +9,13 @@ from pase import reflect as reflect
 import pase.params.config as config
 import pase.constants.error_msg as error
 
-app = Flask(__name__)
+application = Flask(__name__)
 import jsonpickle.ext.numpy as jsonpickle_numpy
 
 jsonpickle_numpy.register_handlers()
 
 
-@app.route("/<class_path>", methods=['POST'])
+@application.route("/<class_path>", methods=['POST'])
 def create(class_path):
     # Check if requested class is in the configuration whitelist.
     if not config.is_in_whitelist(class_path):
@@ -41,7 +41,7 @@ def create(class_path):
     return_json = json.dumps(return_dict)
     return return_json, {'Content-Type': 'application/json'}
 
-@app.route("/<class_path>/copy/<id>", methods=['GET'])
+@application.route("/<class_path>/copy/<id>", methods=['GET'])
 def copy_instance(class_path, id):
     # Copies this instance into another instance and returns the new id.
     try:
@@ -56,7 +56,7 @@ def copy_instance(class_path, id):
     return_json = json.dumps(return_dict)
     return return_json, {'Content-Type': 'application/json'}
 
-@app.route("/<class_path>/copy/<id>/<method_name>", methods=['POST', 'GET'])
+@application.route("/<class_path>/copy/<id>/<method_name>", methods=['POST', 'GET'])
 def copy_call_method(class_path, id, method_name):
     """ Calls method and saves the return value as a new instance. Returns classname and id of the saved return value.
     """
@@ -72,12 +72,12 @@ def copy_call_method(class_path, id, method_name):
     return_json = json.dumps(return_dict)
     return return_json, {'Content-Type': 'application/json'}
 
-@app.route("/<class_path>/safe/<id>/<method_name>", methods=['POST', 'GET'])
+@application.route("/<class_path>/safe/<id>/<method_name>", methods=['POST', 'GET'])
 def call_method_(class_path, id, method_name):
     # This route guarantees that the state of the object doesn't change.
     return call_method(class_path, id, method_name, save = False)
 
-@app.route("/<class_path>/<id>/<method_name>", methods=['POST', 'GET'])
+@application.route("/<class_path>/<id>/<method_name>", methods=['POST', 'GET'])
 def call_method(class_path, id, method_name, save = True):
     if request.method == 'GET'  :
         save = False # Get doesn't change server state.
@@ -115,7 +115,7 @@ def _call_method(class_path, id, method_name, save = False):
         
     return return_value
 
-@app.route("/<class_path>/<id>", methods=['GET'])
+@application.route("/<class_path>/<id>", methods=['GET'])
 def retrieve_state(class_path, id):
     """ Returns the json serialized state of the object of the given id.
     """
@@ -157,5 +157,5 @@ if __name__ == '__main__':
     except:
         pass
     # Run the server
-    app.run(host='localhost', port=port_, debug = config.DEBUGGING)
+    application.run(host='0.0.0.0', port=port_, debug = config.DEBUGGING)
 

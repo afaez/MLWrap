@@ -7,6 +7,7 @@ echo 'Checking dependencies...'
   pip install jsonpickle
   pip install numpy
   pip install scipy
+  pip install gunicorn
 } &> /dev/null # Hides output
 
 echo 'Checking python version...'
@@ -24,5 +25,9 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export MLWRAP_PATH="$DIR"
 
 echo 'Running service... '
-# Run service:
-python src/server.py $1
+if [ "$1" = "" ]; then # No port was specified.
+  set -- "5000"
+fi
+# Run service using gunicorn:
+cd "src"
+gunicorn --bind 0.0.0.0:$1 server
