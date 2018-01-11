@@ -28,7 +28,7 @@ def _do_error_checks(class_name, instance, id = None):
 
 
 def save(class_name, instance, id = None):
-    """ save can be used to create or save an instance under its class name.
+    """ save can be used to save an instance under its class name.
     Params:
     class_name: string of class name of instance with its full path. If Class Bar is in module bar in package foo class_name would be: "foo.bar.Bar"
     instance: python instance which is to be saved.

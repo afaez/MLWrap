@@ -74,8 +74,11 @@ def construct(package_path, parameters):
         else:
             return None
     
-    
-    module = traverse_package(package_path)
+    try:
+        module = traverse_package(package_path)
+    except ModuleNotFoundError as ex:
+        raise ValueError(f"{ex}")
+
     if not module:
         # No module found.
         raise ValueError(error.const.module_not_found.format(".".join(package_path)))

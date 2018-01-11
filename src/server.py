@@ -2,15 +2,14 @@ from flask import Flask
 from flask import request
 from flask_api import status
 import json
-import numpy
-import jsonpickle
 from pase import store as store
 from pase import reflect as reflect
-import pase.params.config as config
+from pase import marshal as marshal
+from pase import composition as composition
+import pase.config as config
 import pase.constants.error_msg as error
-
-application = Flask(__name__)
 import jsonpickle.ext.numpy as jsonpickle_numpy
+application = Flask(__name__)
 
 jsonpickle_numpy.register_handlers()
 
@@ -18,7 +17,7 @@ jsonpickle_numpy.register_handlers()
 @application.route("/<class_path>", methods=['POST'])
 def create(class_path):
     # Check if requested class is in the configuration whitelist.
-    if not config.is_in_whitelist(class_path):
+    if not config.whitelisted(class_path):
         return error.const.class_is_not_accessible.format(class_path), status.HTTP_405_METHOD_NOT_ALLOWED
         
 
@@ -88,7 +87,7 @@ def call_method(class_path, id, method_name, save = True):
         return f"{ex}", status.HTTP_400_BAD_REQUEST
 
     # Parse the output to json.
-    return_json = _serialize_output(return_value)
+    return_json = marshal(return_value)
 
     return return_json, {'Content-Type': 'application/json'}
 
@@ -126,27 +125,81 @@ def retrieve_state(class_path, id):
     except ValueError as ve:
         return f"{ve}"
 
-    return _serialize_output(instance), {'Content-Type': 'application/json'}
+    return marshal(instance), {'Content-Type': 'application/json'}
+
+@application.route("/composition", methods=['POST'])
+def composition_request():
+    # Request body contains constructor parameters
+    body = request.get_json()
+    choreo = composition.Choreography.fromdict(body)
+    return_messages = []
+    variables = {}
+    # processes operation
+    for operation in choreo:
+        return_message = {"op" : f"{operation}"}
+        return_messages.append(return_message)
+        fieldname = operation.leftside 
+        variables[fieldname] = None
+        for argname in operation.args:
+            argument = operation.args[argname]
+            if argument in variables:
+                operation.args[argname] = argument
+
+        instance = None
+        if operation.clazz in variables:
+            instance = variables[operation.clazz]
+            try:
+                instance = reflect.call(instance, operation.func, operation.args)
+                return_message["msg"] = f"The Method {operation.func} from instance {instance} with args: {operation.args} called."
+                return_message["status"] = "success"
+            except ValueError as ve:
+                return_message["msg"] = f"{ve}"
+                return_message["status"] = "error"
+
+        else:
+            path_list = _split_packages(operation.clazz)
+            if  "__construct" != operation.func:
+                path_list.append(operation.func)
+            try:
+                instance, class_name = reflect.construct(path_list, operation.args)
+                return_message["msg"] = f"Instance {instance} with type {class_name} created."
+                return_message["status"] = "success"
+            except ValueError as ve:
+                return_message["msg"] = f"{ve}"
+                return_message["status"] = "error"
+
+        variables[fieldname] = instance
+
+    return_dict = {"log" : return_messages}
+    return_list = []
+    for return_name in choreo.return_list:
+
+        if return_name in choreo.store_list:
+            continue # The id of this will be returned. see below.
+
+        if  return_name in variables:
+            instance = variables[return_name]
+        else:
+            instance = None
+        return_list.append({return_name : instance})
+
+    for store_name in choreo.store_list:
+        if  store_name in variables:
+            instance = variables[return_name]
+            class_name = reflect.fullname(instance)
+            id = store.save(class_name, instance)
+            return_list.append({return_name :{"id": id, "class": class_name}})
+        else:
+            return_list.append({return_name : None})
+
+    return_dict["return"] = return_list
+    return marshal.marshal(return_dict)
 
 
 def _split_packages(class_path):
     """ Splits the class_path by the '.' character. e.g.: _split_packages("package_name.module_name.Class_name") will return the list: ["package_name", "module_name", "Class_name"]
     """
     return class_path.split(".")
-
-def _serialize_output(output):
-    """ Returns the json serialized output of function calls which is sent back to clients:
-    """
-    # TODO: How should we return the return value?
-    if isinstance(output, numpy.ndarray):
-        output = output.tolist()
-    try:
-        # If it is json serializable, do it:
-        return_json = json.dumps(output)
-    except TypeError:
-        # Else just parse it to string and return its string represtation. 
-        return_json = jsonpickle.dumps(output, unpicklable=False)
-    return return_json
 
 if __name__ == '__main__':
     # Retrieve the command line argument to use as a port number.
@@ -157,5 +210,5 @@ if __name__ == '__main__':
     except:
         pass
     # Run the server
-    application.run(host='0.0.0.0', port=port_, debug = config.DEBUGGING)
+    application.run(host='localhost', port=port_, debug = config.debugging())
 
