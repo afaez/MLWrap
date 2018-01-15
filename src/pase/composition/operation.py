@@ -1,38 +1,39 @@
 import json
+
 class Operation:
     def __init__(self, leftside, rightside, input_dict):
-        self.leftside = leftside if leftside is not None else "empty"
+        self.leftside = leftside if leftside is not None else "$empty$"
         self.rightside = rightside
-        splitting = rightside.split("::")
-        if(len(splitting) != 2):
-            raise ValueError()
-        self.clazz = splitting[0].strip()
-        call = splitting[1]
-        splitting = call.split("(")
-        if(len(splitting) != 2):
-            raise ValueError()
-        self.func = splitting[0]
-        args = splitting[1]
-        splitting = (" " + args).split(")")
-        if(len(splitting) == 0):
-            raise ValueError()
-        argsstring = splitting[0].strip()
-        if (len(argsstring) >= 2  and (argsstring[0] == '{' or argsstring[-1] == '}')):
-            argsstring = argsstring[1:-1]
-        splitting = argsstring.split(",")
+        self.clazz, call = splitintwo(rightside, "::")
+        if self.clazz is None: 
+            raise ValueError() # syntax error in class: no double colon
+        self.func, args = splitintwo(call, "(")
+        if(self.func is None):
+            raise ValueError() # syntax error in func name: no parenthesis 
+
         self.args = {}
-        for argstring in splitting:
-            args = argstring.split("=")
-            if(len(args) == 2):
-                fieldname = args[0].strip()
-                argvaluestring = args[1].strip()
-                if argvaluestring in input_dict:
-                    argvalue = input_dict[argvaluestring]
+        if len(args) == 0:
+            return
+
+        parameters, _ = splitintwo(args, ")")
+
+        if (len(parameters) >= 2  and (parameters[0] == '{' and parameters[-1] == '}')):
+            parameters = parameters[1:-1]
+            parameterlist = parameters.split(",")
+        else:
+            return
+            
+        for param in parameterlist:
+            fieldname, argvaluestring = splitintwo(param, "=")
+            if fieldname is not None:
+                if isinstance(argvaluestring,str) and  argvaluestring in input_dict:
+                    argvalue = input_dict[argvaluestring] # try to retrieve the data from input dictionary
                 else:
                     try:
-                        argvalue = json.loads(argvaluestring)
+                        argvalue = json.loads(argvaluestring) # try to parse the value
                     except Exception:
-                        raise ValueError()
+                        argvalue = argvaluestring
+
                 self.args[fieldname] = argvalue
 
     def __str__(self):
@@ -41,3 +42,14 @@ class Operation:
         return f"{self.leftside} = {self.clazz}.{self.func}"
 
     
+def splitintwo(text, char):
+    """ Splits the 'text' into two string objects which are divided by the 'char' character.
+    e.g.: splitintwo("foobar", b) returns: "foo" , "ar"
+    """
+    position = text.find(char)
+    if(position == -1):
+        # return None if split character isn't contained in the given string. 
+        # this is just the definition of splitintwo.
+        return None, None
+    # Divide string into two substrings
+    return text[:position].strip(), text[position+len(char):].strip()

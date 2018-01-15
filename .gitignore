@@ -173,3 +173,4 @@ venv.bak/
 src/data
 data
 test.py
+log.txt

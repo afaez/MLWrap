@@ -1,4 +1,7 @@
-from .operation import Operation
+from .operation import Operation, splitintwo
+
+
+
 class Choreography:
     """Datastructure that holds information about operations and return value.
 
@@ -37,47 +40,47 @@ class Choreography:
         operation_stringlist = dictionary["execute"].split(";")
         operation_list = []
 
+        # Extract "input", "return" and "store" from the json call.
         input_dict = {} # Holds input values.
         if "input" in dictionary:
             try:
                 input_dict = dict(dictionary["input"])
             except Exception:
                 pass
+
+        return_list = dictionary["return"]
+        store_list = dictionary["store"] if "store" in dictionary else []
         
         for operation_string in operation_stringlist:
             if "::" not in operation_string:
                 continue
+            operation_string = operation_string.strip() # In java: "s ".trim() => "s"
+            leftside, rightside = splitintwo(operation_string, "=")
 
-            operation_decomposed = operation_string.split("=")
 
-            if len(operation_decomposed) == 0:
+            if leftside is None or leftside == 0:
                 # Syntax error. Ignore. TODO should we keep ignoring this?
                 continue
 
-            elif len(operation_decomposed) == 1:
+            elif len(rightside) == 0:
                 # Just a call, like: operation_string = "foo.bar()"
-                assignname = None
-                calloperation = operation_decomposed[0].strip()
+                assignname = None # rightside is empty
+                calloperation = leftside # leftside contains call operation
             else  :
-
                 # Assignment, like: operation_string = "a = foo.bar()"
-                assignname = operation_decomposed[0].strip()
-                calloperation = "=".join(operation_decomposed[1:])
+                assignname = leftside
+                calloperation = rightside
 
                 if("::" in assignname) :
                     assignname = None
                     calloperation = operation_string.strip()
-
             try:
-
-                op = Operation(assignname, calloperation, input_dict)
+                op = Operation(assignname, calloperation, input_dict) # Try to parse the operation 
                 operation_list.append(op)
 
             except ValueError:
-                pass
+                pass 
         
-        return_list = dictionary["return"]
-        store_list = dictionary["store"] if "store" in dictionary else []
-        return Choreography(operation_list, return_list, store_list)
+        return Choreography(operation_list, return_list, store_list) # Returns structure containing all operations and inputs and so on.
 
 

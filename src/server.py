@@ -4,7 +4,7 @@ from flask_api import status
 import json
 from pase import store as store
 from pase import reflect as reflect
-from pase import marshal as marshal
+from pase.marshal import marshal as marshal
 from pase import composition as composition
 import pase.config as config
 import pase.constants.error_msg as error
@@ -133,17 +133,22 @@ def composition_request():
     body = request.get_json()
     choreo = composition.Choreography.fromdict(body)
     return_messages = []
+
     variables = {}
     # processes operation
     for operation in choreo:
-        return_message = {"op" : f"{operation}"}
-        return_messages.append(return_message)
         fieldname = operation.leftside 
         variables[fieldname] = None
         for argname in operation.args:
             argument = operation.args[argname]
-            if argument in variables:
-                operation.args[argname] = argument
+            try:
+                if  argument in variables:
+                    operation.args[argname] = variables[argument]
+            except TypeError:
+                pass
+
+        return_message = {"op" : f"{operation} < {operation.args} \n"}
+        return_messages.append(return_message)
 
         instance = None
         if operation.clazz in variables:
@@ -171,7 +176,7 @@ def composition_request():
         variables[fieldname] = instance
 
     return_dict = {"log" : return_messages}
-    return_list = []
+    return_variables = {}
     for return_name in choreo.return_list:
 
         if return_name in choreo.store_list:
@@ -181,19 +186,19 @@ def composition_request():
             instance = variables[return_name]
         else:
             instance = None
-        return_list.append({return_name : instance})
+        return_variables[return_name] = marshal(instance)
 
     for store_name in choreo.store_list:
         if  store_name in variables:
-            instance = variables[return_name]
+            instance = variables[store_name]
             class_name = reflect.fullname(instance)
             id = store.save(class_name, instance)
-            return_list.append({return_name :{"id": id, "class": class_name}})
+            return_variables[store_name] = {"id": id, "class": class_name}
         else:
-            return_list.append({return_name : None})
+            return_variables[store_name] = None
 
-    return_dict["return"] = return_list
-    return marshal.marshal(return_dict)
+    return_dict["return"] = return_variables
+    return marshal(return_dict)
 
 
 def _split_packages(class_path):

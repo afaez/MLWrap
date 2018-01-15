@@ -88,3 +88,10 @@ def restore_state(class_name, id):
     jsonstring = file.read()
     file.close()
     return jsonstring
+
+def readfile(path):
+    return open(path, "r")
+
+def writefile(path):
+    return open(path, "w")
+

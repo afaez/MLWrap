@@ -9,6 +9,8 @@ def marshal(output):
     # TODO: How should we return the return value?
     if isinstance(output, numpy.ndarray):
         output = output.tolist()
+    if isinstance(output, int):
+        return output
     try:
         # If it is json serializable, do it:
         return_json = json.dumps(output)
