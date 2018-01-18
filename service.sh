@@ -20,6 +20,7 @@ if [ $? -ne 0  ]; then # if the return code is not equal 0, exit.
 fi
 
 echo 'Creating system envirement variable...'
+
 # Create system envirement:
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export MLWRAP_PATH="$DIR"

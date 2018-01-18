@@ -10,109 +10,36 @@ import pase.config as config
 import pase.constants.error_msg as error
 import jsonpickle.ext.numpy as jsonpickle_numpy
 application = Flask(__name__)
-
 jsonpickle_numpy.register_handlers()
+
+import servicehandler
 
 
 @application.route("/<class_path>", methods=['POST'])
 def create(class_path):
-    # Check if requested class is in the configuration whitelist.
-    if not config.whitelisted(class_path):
-        return error.const.class_is_not_accessible.format(class_path), status.HTTP_405_METHOD_NOT_ALLOWED
-        
-
-    # Split the class_path into a list of paths.
-    path_list = _split_packages(class_path)
     # Request body contains constructor parameters
-    body = request.get_json()
-
-    # If path list is empty or only contains one value, return error:
-    if len(path_list) < 2:
-        return error.const.no_package_was_sent, status.HTTP_400_BAD_REQUEST
-    # Create the instance objects:
-    try:
-        instance, class_name = reflect.construct(path_list, body)
-    except ValueError as ve:
-        return f"{ve}", status.HTTP_400_BAD_REQUEST
-    # Save the instance object and create a new id:
-    id = store.save(class_name, instance)
-    return_dict = {"id": id, "class": class_name}
-    return_json = json.dumps(return_dict)
-    return return_json, {'Content-Type': 'application/json'}
+    jsondict = parse_jsonbody()
+    # Delegate call to the servicehandler
+    return servicehandler.create(class_path, jsondict)
 
 @application.route("/<class_path>/copy/<id>", methods=['GET'])
 def copy_instance(class_path, id):
-    # Copies this instance into another instance and returns the new id.
-    try:
-        # Recover the instance from the memory:
-        instance = store.restore(class_path, id)
-    except ValueError as ve:
-        return f"{ve}"
-
-    # Save the instance object as a new instance and create a new id:
-    new_id = store.save(class_path, instance)
-    return_dict = {"id": new_id, "class": class_path}
-    return_json = json.dumps(return_dict)
-    return return_json, {'Content-Type': 'application/json'}
+    return servicehandler.copy_instance(class_path, id)
 
 @application.route("/<class_path>/copy/<id>/<method_name>", methods=['POST', 'GET'])
 def copy_call_method(class_path, id, method_name):
-    """ Calls method and saves the return value as a new instance. Returns classname and id of the saved return value.
-    """
-    try:
-        return_value = _call_method(class_path, id, method_name)
-    except Exception as ex:
-        return f"{ex}", status.HTTP_400_BAD_REQUEST
-
-    # Save the return object as a new instance and create a new id:
-    class_name = reflect.fullname(return_value)
-    new_id = store.save(class_name, return_value)
-    return_dict = {"id": new_id, "class": class_name}
-    return_json = json.dumps(return_dict)
-    return return_json, {'Content-Type': 'application/json'}
-
-@application.route("/<class_path>/safe/<id>/<method_name>", methods=['POST', 'GET'])
-def call_method_(class_path, id, method_name):
-    # This route guarantees that the state of the object doesn't change.
-    return call_method(class_path, id, method_name, save = False)
+    jsondict = parse_jsonbody()
+    return servicehandler.copy_call_method(class_path, id, method_name, jsondict)
 
 @application.route("/<class_path>/<id>/<method_name>", methods=['POST', 'GET'])
 def call_method(class_path, id, method_name, save = True):
-    if request.method == 'GET'  :
-        save = False # Get doesn't change server state.
-
-    try:
-        return_value = _call_method(class_path, id, method_name, save)
-    except Exception as ex:
-        return f"{ex}", status.HTTP_400_BAD_REQUEST
-
-    # Parse the output to json.
-    return_json = marshal(return_value)
-
-    return return_json, {'Content-Type': 'application/json'}
-
-def _call_method(class_path, id, method_name, save = False):
-    """ Handles calling the method. 
-    """
-    # Executes the method call 
-    # Parse the parameters from the body:
-    if request.method != 'GET'  :
-        params = request.get_json()
-    else: 
-        params = {}
-    # Recover the instance from the memory:
-    instance = store.restore(class_path, id)
-
-
-    # Call the requested function or attribute:
-    return_value = reflect.call(instance, method_name, params)
-    
-    # Change the state of the instance if HTTP method is PUT.
-    # (POST guarantees that the state doesn't change.)
-    if save:
-        store.save(class_path, instance, id)
-        
-    return return_value
+    #print(f"Call method received: {class_path}:{id}:{method_name}")
+    if request.method == "GET":
+        save = False
+    jsondict = parse_jsonbody()
+    return_val1, return_val2 = servicehandler.call_method(class_path, id, method_name, jsondict, save)
+    #print(f"returning: \n {return_val1} \n {return_val2}")
+    return return_val1
 
 @application.route("/<class_path>/<id>", methods=['GET'])
 def retrieve_state(class_path, id):
@@ -162,7 +89,7 @@ def composition_request():
                 return_message["status"] = "error"
 
         else:
-            path_list = _split_packages(operation.clazz)
+            path_list = servicehandler._split_packages(operation.clazz)
             if  "__construct" != operation.func:
                 path_list.append(operation.func)
             try:
@@ -186,7 +113,7 @@ def composition_request():
             instance = variables[return_name]
         else:
             instance = None
-        return_variables[return_name] = marshal(instance)
+        return_variables[return_name] = instance
 
     for store_name in choreo.store_list:
         if  store_name in variables:
@@ -200,11 +127,17 @@ def composition_request():
     return_dict["return"] = return_variables
     return marshal(return_dict)
 
-
-def _split_packages(class_path):
-    """ Splits the class_path by the '.' character. e.g.: _split_packages("package_name.module_name.Class_name") will return the list: ["package_name", "module_name", "Class_name"]
+def parse_jsonbody():
+    """ Parses and returns the json body from the http request. 
+    Returns an empty dictionary in case the http request body can't be parsed as a json string.
     """
-    return class_path.split(".")
+    # force means that mimetypes are ignored. (So there is no need for 'application/json' in the header.)
+    # silent means that in case of a fail it won't raise an exception.
+    body = request.get_json(force = True, silent = True) 
+    if body is None:
+        body = {}
+    return body
+
 
 if __name__ == '__main__':
     # Retrieve the command line argument to use as a port number.
