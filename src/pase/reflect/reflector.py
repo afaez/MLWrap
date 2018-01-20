@@ -116,17 +116,21 @@ def call(instance, method_name, parameters = {}):
         attribute_ = None
     # If the requested attribute is a method, call it: 
     # Note that: callable(None) returns False.
-    if(callable(attribute_)) :
-        method_ = attribute_
-        validated_params = _validate_parameters(parameters, method_)
-        returned_val = method_(**validated_params)
-    # Else the attribute might actually be a field. Return it's value:
-    else :
-        try:
+
+    try:
+        if(callable(attribute_)) :
+            method_ = attribute_
+            validated_params = _validate_parameters(parameters, method_)
+            returned_val = method_(**validated_params)
+        # Else the attribute might actually be a field. Return it's value:
+        else :
             if "value" in parameters:
                 setattr(instance, method_name, parameters["value"])
             returned_val = getattr(instance, method_name)
-        except AttributeError as exeption:
-            raise ValueError(f"{exeption}")
+
+    except AttributeError as exception:
+        raise ValueError(f"{exception}")
+    except TypeError as exception:
+        raise ValueError(f"{exception}")
 
     return returned_val

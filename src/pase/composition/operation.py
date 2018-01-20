@@ -1,8 +1,12 @@
 import json
-
 class Operation:
     def __init__(self, leftside, rightside, input_dict):
+
         self.leftside = leftside if leftside is not None else "$empty$"
+        if "/" in rightside:
+            self.host, rightside =  splitintwo(rightside, "/")
+        else: 
+            self.host = "empty"
         self.rightside = rightside
         self.clazz, call = splitintwo(rightside, "::")
         if self.clazz is None: 
@@ -12,7 +16,9 @@ class Operation:
             raise ValueError() # syntax error in func name: no parenthesis 
 
         self.args = {}
-        if len(args) == 0:
+        if len(args) == 0: 
+        # I know i can use 'if len(args):' or 'if args:' instead. 
+        # But this condition is more readable in my opinion. 
             return
 
         parameters, _ = splitintwo(args, ")")

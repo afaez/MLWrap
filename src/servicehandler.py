@@ -4,12 +4,12 @@ from flask_api import status
 import json
 from pase import store as store
 from pase import reflect as reflect
-from pase.marshal import marshal as marshal
+from pase.marshal import marshal as marshal, marshaldict
 from pase import composition as composition
 import pase.config as config
 import pase.constants.error_msg as error
 import jsonpickle.ext.numpy as jsonpickle_numpy
-
+import logging
 
 def create(class_path, body):
     # Check if requested class is in the configuration whitelist.
@@ -90,6 +90,76 @@ def _call_method(class_path, id, method_name, params, save = False):
         store.save(class_path, instance, id)
         
     return return_value
+
+def execute_composition(choreo):
+    """ Executes the given choreo
+    """
+    return_messages = []
+    variables = {}
+    # processes operation
+    for operation in choreo:
+        fieldname = operation.leftside 
+        variables[fieldname] = None
+        return_message = {"op" : f"{operation} < {operation.args} \n"}
+        return_messages.append(return_message)
+        for argname in operation.args:
+            argument = operation.args[argname]
+            try:
+                if  argument in variables:
+                    operation.args[argname] = variables[argument]
+            except TypeError:
+                pass
+
+
+        instance = None
+        if operation.clazz in variables:
+            instance = variables[operation.clazz]
+            try:
+                instance = reflect.call(instance, operation.func, operation.args)
+                return_message["msg"] = f"The Method {operation.func} from instance {instance} with args: {operation.args} called."
+                return_message["status"] = "success"
+            except ValueError as ve:
+                return_message["msg"] = f"{ve}"
+                return_message["status"] = "error"
+
+        else:
+            path_list = _split_packages(operation.clazz)
+            if  "__construct" != operation.func:
+                path_list.append(operation.func)
+            try:
+                instance, class_name = reflect.construct(path_list, operation.args)
+                return_message["msg"] = f"Instance {instance} with type {class_name} created."
+                return_message["status"] = "success"
+            except ValueError as ve:
+                return_message["msg"] = f"{ve}"
+                return_message["status"] = "error"
+
+        variables[fieldname] = instance
+    logging.debug("Execution logs: \n" + json.dumps(return_messages, sort_keys=True, \
+        indent=4, separators=(',', ': ')))
+    return_variables = {}
+    for return_name in choreo.return_list:
+
+        if return_name in choreo.store_list:
+            continue # The id of this will be returned. see below.
+        
+        if  return_name in variables:
+            instance = variables[return_name]
+        else:
+            instance = None
+        return_variables[return_name] = instance
+
+    for store_name in choreo.store_list:
+        if  store_name in variables:
+            instance = variables[store_name]
+            class_name = reflect.fullname(instance)
+            id = store.save(class_name, instance)
+            return_variables[store_name] = {"id": id, "class": class_name}
+        else:
+            return_variables[store_name] = None
+    
+    return marshaldict(return_variables)
+
 
 
 def _split_packages(class_path):

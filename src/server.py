@@ -59,73 +59,7 @@ def composition_request():
     # Request body contains constructor parameters
     body = request.get_json()
     choreo = composition.Choreography.fromdict(body)
-    return_messages = []
-
-    variables = {}
-    # processes operation
-    for operation in choreo:
-        fieldname = operation.leftside 
-        variables[fieldname] = None
-        for argname in operation.args:
-            argument = operation.args[argname]
-            try:
-                if  argument in variables:
-                    operation.args[argname] = variables[argument]
-            except TypeError:
-                pass
-
-        return_message = {"op" : f"{operation} < {operation.args} \n"}
-        return_messages.append(return_message)
-
-        instance = None
-        if operation.clazz in variables:
-            instance = variables[operation.clazz]
-            try:
-                instance = reflect.call(instance, operation.func, operation.args)
-                return_message["msg"] = f"The Method {operation.func} from instance {instance} with args: {operation.args} called."
-                return_message["status"] = "success"
-            except ValueError as ve:
-                return_message["msg"] = f"{ve}"
-                return_message["status"] = "error"
-
-        else:
-            path_list = servicehandler._split_packages(operation.clazz)
-            if  "__construct" != operation.func:
-                path_list.append(operation.func)
-            try:
-                instance, class_name = reflect.construct(path_list, operation.args)
-                return_message["msg"] = f"Instance {instance} with type {class_name} created."
-                return_message["status"] = "success"
-            except ValueError as ve:
-                return_message["msg"] = f"{ve}"
-                return_message["status"] = "error"
-
-        variables[fieldname] = instance
-
-    return_dict = {"log" : return_messages}
-    return_variables = {}
-    for return_name in choreo.return_list:
-
-        if return_name in choreo.store_list:
-            continue # The id of this will be returned. see below.
-
-        if  return_name in variables:
-            instance = variables[return_name]
-        else:
-            instance = None
-        return_variables[return_name] = instance
-
-    for store_name in choreo.store_list:
-        if  store_name in variables:
-            instance = variables[store_name]
-            class_name = reflect.fullname(instance)
-            id = store.save(class_name, instance)
-            return_variables[store_name] = {"id": id, "class": class_name}
-        else:
-            return_variables[store_name] = None
-
-    return_dict["return"] = return_variables
-    return marshal(return_dict)
+    return servicehandler.execute_composition(choreo)
 
 def parse_jsonbody():
     """ Parses and returns the json body from the http request. 
