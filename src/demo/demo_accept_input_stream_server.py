@@ -17,12 +17,12 @@ def catch_all(path):
         if len(chunk) == 0:
             break
         else :
-            data.append(chunk)
+            data.extend(chunk)
 
 
     print("---> Sream length: \n", len(data)) 
     decodeddata = data.decode()
-    #print("---> Sream: \n", decodeddata)
+    print("---> Sream: \n", decodeddata)
 
     return "success"
 

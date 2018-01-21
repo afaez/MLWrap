@@ -1,14 +1,6 @@
 #!/bin/bash
 
-echo 'Checking dependencies...'
-{
-  pip install flask
-  pip install flask-api
-  pip install jsonpickle
-  pip install numpy
-  pip install scipy
-  pip install gunicorn
-} &> /dev/null # Hides output
+echo 'Skipped checking dependencies...'
 
 echo 'Checking python version...'
 # Need to check if version is above 3.6:

@@ -27,71 +27,6 @@ class Choreography:
     def __repr__(self):
         return f"ops:{self.operation_list}\nreturns:{self.return_list}\nstores:{self.store_list}"
 
-    @classmethod 
-    def fromstring(cls, choreography):
-        """ Creates a Choreography object from a string. 
-        This method conforms to the implementation of JASE.
-        """
-        if not choreography: 
-            # the given string is null or empty
-            raise ValueError("None or empty string was given.")
-
-        choreography = choreography.strip()
-        pairs = choreography.split("&") # split by '&'
-        # create parameter object
-        parameters = {}
-        for pair in pairs:
-            parameter = pair.split("=", 1) 
-            # split only returns on array of size two: "A=B=C" -> ["A", "B=C"]
-            if len(parameter) < 2:
-                continue
-            key = parameter[0]
-            value = parameter[1]
-            if key in parameters:
-                # key was already found. add to the list in the dictionary:
-                list_ = list(parameter[key])
-                list_.append(value)
-                parameters[key] = list_
-            else:
-                # First time adding
-                parameters[key] = value
-
-        # Extract coreography and index
-        if "coreography" not in parameters:
-            raise ValueError("This service can only execute choreographies")
-        choreography_string = parameters["coreography"]
-        if "currentindex" not in parameters:
-            currentindex = 0
-        else:
-            currentindex = parameters["currentindex"]
-
-        # json deserialise inputs and put them by their indexes into 'inputs' dictionary
-        inputs = {}
-        for key in parameters:
-            if not key.startswith("inputs"):
-                # this is not an input
-                continue
-
-			# Extract index from brackets. e.g.: inputName =  "inputs[i1]" -> index = "i1"
-            index = find_between(key, '[', ']')
-            input_stringvalue = str(parameters[key])
-            input_object = json.loads(input_stringvalue)
-
-            if "type" not in input_object:
-                # the json input doesn't have a type field.
-                raise ValueError(f"No type field in inputs[{index}]={input_stringvalue}")
-            if not pase.marshal.isknowntype(input_object["type"]):
-                # The given type isn't known by the marshalling system.
-                type_ = input_object["type"]
-                raise ValueError(f"The given type = {type_} isn't known by the marshalling system.")
-            inputs[index] = input_object
-
-        # Now reuse fromdict method from below:
-        logging.debug("Parsing choero : "+ choreography_string)
-        request_dictionary = {"execute" : choreography_string, "input" : inputs}
-        choreo = Choreography.fromdict(request_dictionary)
-        choreo.currentindex = currentindex
-        return choreo
 
     @classmethod
     def fromjson(cls, jsonstring):
@@ -170,13 +105,3 @@ class Choreography:
         
         return Choreography(operation_list, return_list, store_list) 
         # Returns structure containing all operations and inputs and so on.
-
-def find_between(s, first, last):
-    """ Extracts the substring in between two delimiters.
-    """
-    try:
-        start = s.index( first ) + len( first )
-        end = s.index( last, start )
-        return s[start:end]
-    except ValueError:
-        return ""
