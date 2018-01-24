@@ -1,0 +1,15 @@
+{
+
+    "plainlib.package1.b.B" : {
+        "wrapper":"wrappers.bWrap.BWrap"
+    },
+    "plainlib.package1.b.B.random": {
+        "classname": "plainlib.package1.b.B"
+    },
+    "sklearn.preprocessing.normalize": {
+        "wrapper" : "wrappers.sk.normalize_labeledinstances"
+    },
+    "sklearn.linear_model.LinearRegression":{
+        "wrapper" : "wrappers.sk.WrappedPredictor"
+    }
+}

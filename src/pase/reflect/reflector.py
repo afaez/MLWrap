@@ -1,4 +1,6 @@
 import inspect
+import pase.config
+import logging
 from importlib import \
     import_module  # used to dereference module names. see function: construct
 from inspect import \
@@ -6,12 +8,25 @@ from inspect import \
 
 import pase.constants.error_msg as error  # Contains error messages constants.
 
+def _extract_arglist(kwargs):
+    """ Extracts 'arglist' array from kwargs dictionary. 
+    If kwargs['arglist'] doesn't map to a list, this method returns an empty list
+    """
+    args = []
+    if( "arglist" in kwargs):
+        args = kwargs["arglist"]
+    if args is None or not isinstance(args, list):
+        # Defaults to empty argument list if there was any problem
+        args = []
+    return args
 
-def _validate_parameters(given_param, callable_):
-    """ validates the parameters from the given_param and returns a clean paramter dictionary.
+def validate_parameters(given_param, callable_):
+    """ validates the parameters from the given_param and fills it with the argument from given_param_list and returns a clean paramter dictionary which matches the signature of the callable_.
     Parameters:
         given_param: Dictionary given to call the callable_
         callable_: Python callable object. Can be a function or a constructor.
+        given_param_list: contains the list of positional arguments which are given by the client. 
+            
     Returns: 
         A sanitized parameter dictionary that can be used to call the callable_.
     Raises:
@@ -22,11 +37,19 @@ def _validate_parameters(given_param, callable_):
     signature_ = signature(callable_)
     if(given_param is None):
         given_param = {}
+    # Extract args from kwargs
+    given_param_list = _extract_arglist(given_param)
     # iterate over every parameter:
     for param_key in signature_.parameters:
-        if(param_key in given_param):
+        if len(given_param_list) > 0: # there are still positional arguments to be dealt with
+            # Delete positional arguments until its empty.
+            argument = given_param_list.pop(0) # extract first argument.
+            validated_dict[param_key] = argument # add the argument to the validated list
+
+        elif(param_key in given_param):
             # Copy parameters to the validated dictionary:
             validated_dict[param_key] = given_param[param_key]
+
         elif(signature_.parameters[param_key].default == inspect._empty): # No default is set.
             # The parameter wasn't sent by the client. 
             raise ValueError(error.const.parameter_is_mandatory.format(f"{param_key}"))
@@ -41,14 +64,20 @@ def fullname(o):
     except AttributeError: # o object has no attribute '__module__'
         return o.__class__.__name__
 
-    
-    
-def construct(package_path, parameters):
-    """ Dereferences a callable by its package_path and calls it using the given parameters.
-    """ 
-    def traverse_package(package_path, package_string = ""):
+def traverse_package(package_path, package_string = ""):
         """ Recursively traverses package_path list and calls traverse_module.
         """
+        def traverse_module(package_path, module):
+            """ Recursevly traverses package_path until it its empty and the module is found. Else None is returned.
+            """
+            if not package_path:
+                return module
+            attribute = package_path[0]
+            if hasattr(module, attribute):
+                return traverse_module(package_path[1:], getattr(module, attribute))
+            else:
+                return None
+
         package_string = package_string + package_path[0]
         package_path = package_path[1:]
         if not package_path:
@@ -62,18 +91,11 @@ def construct(package_path, parameters):
         else:
             return traverse_package(package_path, package_string + ".")
 
-
-    def traverse_module(package_path, module):
-        """ Recursevly traverses package_path until it its empty and the module is found. Else None is returned.
-        """
-        if not package_path:
-            return module
-        attribute = package_path[0]
-        if hasattr(module, attribute):
-            return traverse_module(package_path[1:], getattr(module, attribute))
-        else:
-            return None
     
+    
+def construct(package_path, kwargs):
+    """ Dereferences a callable by its package_path and calls it using the given parameters.
+    """ 
     try:
         module = traverse_package(package_path)
     except ModuleNotFoundError as ex:
@@ -87,12 +109,12 @@ def construct(package_path, parameters):
         if(not callable(clazz)):
             raise ValueError(error.const.cannot_construct_class_name.format(clazz.__name__,".".join(package_path)))
         # Validate the parameters:
-        validated_params = _validate_parameters(parameters, clazz)
+        validated_args = validate_parameters(kwargs, clazz)
         # Call the constructor:
-        instance = clazz(**validated_params)
+        instance = clazz(**validated_args)
         return instance, fullname(instance)
     except AttributeError as e:
-        print(f"{e}")
+        logging.error(e, exc_info=True)
         raise e #ValueError(error.const.class_not_found_in_module.format( class_name, module_name))
     
 
@@ -120,7 +142,7 @@ def call(instance, method_name, parameters = {}):
     try:
         if(callable(attribute_)) :
             method_ = attribute_
-            validated_params = _validate_parameters(parameters, method_)
+            validated_params = validate_parameters(parameters, method_)
             returned_val = method_(**validated_params)
         # Else the attribute might actually be a field. Return it's value:
         else :

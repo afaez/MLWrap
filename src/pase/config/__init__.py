@@ -1,7 +1,5 @@
 """ config offers method for whitelist check. In future config offers signarture information.
 """
+from . import lookup
 def debugging():
-    return True
-
-def whitelisted(class_path):
-    return True
+    return False

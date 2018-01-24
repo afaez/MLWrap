@@ -5,12 +5,12 @@ import pase.constants.error_msg as error
 import jsonpickle
 
 def _topath(class_name):
-    return  "data/" + class_name
+    return  "../data/" + class_name
 
 def _tofilepath(class_name, id):
-    return "data/" + class_name + "/" + id
+    return "../data/" + class_name + "/" + id
 
-def _do_error_checks(class_name, instance, id = None):
+def _do_error_checks(class_name, id = None):
     """ Private function that checks if parameters are chosen without errors.
     """
      # Boundary checks.
@@ -24,7 +24,7 @@ def _do_error_checks(class_name, instance, id = None):
     # If id is given we need to check if the instance was saved before. (The storage module is the one who defines ids)
     if id is not None:
         if(not os.path.isfile(_tofilepath(class_name, id))):
-            raise ValueError(error.const.instance_with_id_doesnt_exist.format(f"{instance}", class_name, id))
+            raise ValueError(error.const.instance_with_id_doesnt_exist.format("", class_name, id))
 
 
 def save(class_name, instance, id = None):
@@ -36,7 +36,7 @@ def save(class_name, instance, id = None):
     
     """
     # Check for boundry errors.
-    _do_error_checks(class_name, instance, id)
+    _do_error_checks(class_name, id)
     if(instance is None):
         raise ValueError(error.const.is_null.format("instance"))
     #if(not isinstance(instance, class_name)):
@@ -76,7 +76,7 @@ def restore(class_name, id):
 
 def restore_state(class_name, id):
     # Boundary checks.
-    _do_error_checks(class_name, None, id)
+    _do_error_checks(class_name, id)
     # restore needs id to be assigend.
     if(id == None): 
         raise ValueError(error.const.is_null.format("id"))

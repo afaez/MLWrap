@@ -27,13 +27,6 @@ def marshaldict(dict_):
         dict_[key] = marshaltype(dict_[key])
     return marshal(dict_) 
 
-
-
-def isknowntype(type_):
-    """ Returns True if the type_ string given is known by the marshalling system.
-    """
-    return True # TODO implement marshalling system
-
 def fromdict(dict_):
     """ Parses from dictionary to Python Object:
     """

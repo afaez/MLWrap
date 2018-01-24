@@ -4,17 +4,19 @@ from flask_api import status
 import json
 from pase import store 
 from pase import reflect 
-from pase.marshal import marshal, marshaldict, isknowntype
+from pase.marshal import marshal, marshaldict
 from pase import composition 
-import pase.config as config
+from pase import config
 import pase.constants.error_msg as error
 import jsonpickle.ext.numpy as jsonpickle_numpy
 import logging
+import re
 
 def create(class_path, body):
     # Check if requested class is in the configuration whitelist.
-    if not config.whitelisted(class_path):
+    if not config.lookup.class_known(class_path):
         return error.const.class_is_not_accessible.format(class_path), status.HTTP_405_METHOD_NOT_ALLOWED
+    
     # Split the class_path into a list of paths.
     path_list = _split_packages(class_path)
 
@@ -23,6 +25,7 @@ def create(class_path, body):
         return error.const.no_package_was_sent, status.HTTP_400_BAD_REQUEST
     # Create the instance objects:
     try:
+        logging.debug(f"Creat called: \n{path_list}\n{body}")
         instance, class_name = reflect.construct(path_list, body)
     except ValueError as ve:
         return f"{ve}", status.HTTP_400_BAD_REQUEST
@@ -55,6 +58,7 @@ def call_method(class_path, id, method_name, jsondict, copy=False):
     try:
         return_value = _call_method(class_path, id, method_name, jsondict)
     except Exception as ex: # catch all exception
+        logging.error(ex, exc_info=True)
         return f"{ex}", status.HTTP_400_BAD_REQUEST
     if copy:
         # Save the return object as a new instance and create a new id:
@@ -123,6 +127,7 @@ def execute_composition(choreo):
                 return_message["msg"] = f"The Method {operation.func} from instance {instance} with args: {operation.args} called."
                 return_message["status"] = "success"
             except ValueError as ve:
+                logging.error(ve, exc_info=True)
                 return_message["msg"] = f"{ve}"
                 return_message["status"] = "error"
 
@@ -176,6 +181,7 @@ def setuplogging():
     pathlib.Path(directory).mkdir(parents=True, exist_ok=True) 
     # logfile  path definition
     logfilepath = directory + "/pase_{}.log".format(now.strftime("%Y-%m-%d_%H-%M-%S"))
+    print("logging in " + logfilepath)
     # logs will be written to the ^ upper ^ logfile.
     # TODO get logging lvl from configuration
     logging.basicConfig(filename=logfilepath,level=logging.DEBUG) 
@@ -192,12 +198,13 @@ def bodystring_to_bodydict(body_string):
         raise ValueError("None or empty string was given.")
 
     body_string = body_string.strip()
+    request_dictionary = dict() # this will be returned.
     pairs = body_string.split("&") # split by '&'
     # create parameter object
     parameters = {}
     for pair in pairs:
-        parameter = pair.split("=", 1) 
         # split only returns on array of size two: "A=B=C" -> ["A", "B=C"]
+        parameter = pair.split("=", 1) 
         if len(parameter) < 2:
             continue
         key = parameter[0]
@@ -212,16 +219,18 @@ def bodystring_to_bodydict(body_string):
             parameters[key] = value
 
     # Extract coreography and index
-    if "coreography" not in parameters:
-        raise ValueError("This service can only execute choreographies")
-    body_string_string = parameters["coreography"]
+    if "coreography" in parameters:
+        choreography_string = parameters["coreography"]
+        request_dictionary["execute"] = choreography_string
+        logging.debug(f"choreo: {choreography_string}")
+
     if "currentindex" not in parameters:
-        currentindex = 0
+        request_dictionary["currentindex"] = 0
     else:
-        currentindex = parameters["currentindex"]
+        request_dictionary["currentindex"] = parameters["currentindex"]
 
     # json deserialise inputs and put them by their indexes into 'inputs' dictionary
-    inputs = {}
+    inputs = {"arglist":[]}
     for key in parameters:
         if not key.startswith("inputs"):
             # this is not an input
@@ -232,19 +241,25 @@ def bodystring_to_bodydict(body_string):
         input_stringvalue = str(parameters[key])
         input_object = json.loads(input_stringvalue)
 
-        if "type" not in input_object:
+        if not isinstance(input_object, dict) or "type" not in input_object:
             # the json input doesn't have a type field.
             raise ValueError(f"No type field in inputs[{index}]={input_stringvalue}")
-        if not isknowntype(input_object["type"]):
+        if not config.lookup.check_type(input_object["type"]):
             # The given type isn't known by the marshalling system.
             type_ = input_object["type"]
-            raise ValueError(f"The given type = {type_} isn't known by the marshalling system.")
-        inputs[index] = input_object
+            raise ValueError(f"The given type = {type_} isn't known by the system.")
+        if re.match("^i[0-9]+$", index): 
+            # if the index matches the pattern it is a positional argument. like i1, i2...
+            # extract index: index = i10 -> index = 10
+            index = int(index[1:]) 
+            # insert value in the arglist array in position=index:
+            inputs["arglist"][index] = input_object
+        else:
+            # it is a keyword argument
+            inputs[index] = input_object
 
-    # Now reuse fromdict method from below:
-    logging.debug("Parsing choero : "+ body_string_string)
-    request_dictionary = {"execute" : body_string_string, "input" : inputs}
-    request_dictionary["currentindex"] = currentindex
+    request_dictionary["input"] = inputs
+
     return request_dictionary
 
 def _split_packages(class_path):

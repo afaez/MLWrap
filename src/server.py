@@ -6,7 +6,6 @@ from pase import store as store
 from pase import reflect as reflect
 from pase.marshal import marshal as marshal
 from pase import composition as composition
-import pase.config as config
 import pase.constants.error_msg as error
 import jsonpickle.ext.numpy as jsonpickle_numpy
 import servicehandler
@@ -80,12 +79,13 @@ def parse_jsonbody():
     """ Parses and returns the json body from the http request. 
     Returns an empty dictionary in case the http request body can't be parsed as a json string.
     """
-    print(request.headers.get('content-type'))
+    #print(request.headers.get('content-type'))
     if 'application/json' in request.headers.get('content-type').lower() :
         # force means that mimetypes are ignored. 
         # (So there is no need for 'application/json' in the header.)
         # silent means that in case of a fail it won't raise an exception.
         body = request.get_json(force = True, silent = True) 
+        #logging.debug(f"read body{body}")
         if body is None:
             body = {} # put empty dict in case of an invalid syntax.
         jsoncontent = True
@@ -129,5 +129,6 @@ if __name__ == '__main__':
     except:
         pass
     # Run the server
-    application.run(host='localhost', port=port_, debug = config.debugging())
+    import pase.config
+    application.run(host='localhost', port=port_, debug = pase.config.debugging())
 
