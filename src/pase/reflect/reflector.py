@@ -9,12 +9,12 @@ from inspect import \
 import pase.constants.error_msg as error  # Contains error messages constants.
 
 def _extract_arglist(kwargs):
-    """ Extracts 'arglist' array from kwargs dictionary. 
-    If kwargs['arglist'] doesn't map to a list, this method returns an empty list
+    """ Extracts '$arglist$' array from kwargs dictionary. 
+    If kwargs['$arglist$'] doesn't map to a list, this method returns an empty list
     """
     args = []
-    if( "arglist" in kwargs):
-        args = kwargs["arglist"]
+    if( "$arglist$" in kwargs):
+        args = kwargs["$arglist$"]
     if args is None or not isinstance(args, list):
         # Defaults to empty argument list if there was any problem
         args = []

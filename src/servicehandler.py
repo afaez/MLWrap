@@ -4,13 +4,15 @@ from flask_api import status
 import json
 from pase import store 
 from pase import reflect 
-from pase.marshal import marshal, marshaldict
+from pase.marshal import marshal, marshaldict, fromdict
 from pase import composition 
 from pase import config
 import pase.constants.error_msg as error
 import jsonpickle.ext.numpy as jsonpickle_numpy
-import logging
-import re
+import logging 
+import re # regular expression used in bodystring_to_bodydict()
+import traceback # for logging stacktraces in compsition execution method
+import compositionclient
 
 def create(class_path, body):
     # Check if requested class is in the configuration whitelist.
@@ -30,10 +32,15 @@ def create(class_path, body):
     except ValueError as ve:
         return f"{ve}", status.HTTP_400_BAD_REQUEST
     # Save the instance object and create a new id:
-    id = store.save(class_name, instance)
-    return_dict = {"id": id, "class": class_name}
-    return_json = json.dumps(return_dict)
-    return return_json, {'Content-Type': 'application/json'}
+    try:
+        id = store.save(class_name, instance)
+        return_dict = {"id": id, "class": class_name}
+        return_json = json.dumps(return_dict)
+        return return_json, {'Content-Type': 'application/json'}
+    except Exception as ex:
+        # some internal error occurred.
+        return_msg = str(ex)
+        return return_msg, status.HTTP_500_INTERNAL_SERVER_ERROR
 
 def copy_instance(class_path, id):
     # Copies this instance into another instance and returns the new id.
@@ -93,71 +100,79 @@ def _call_method(class_path, id, method_name, params):
 def execute_composition(choreo):
     """ Executes the given choreo
     """
-    return_messages = []
-    variables = {}
 
-    # check if currentindex points to the new one.
+    # check if currentindex is in range.
     if len(choreo.operation_list)<=choreo.currentindex:
         logging.debug(f"body_string has less operations than the currentindex={choreo.currentindex} points to: {choreo}")
         return "nothing to execute", status.HTTP_400_BAD_REQUEST
+    
+    
+    # variables are a copy of input_dict
+    variables = dict(choreo.input_dict)
 
-    # 
-
-
+    operatingindex = -1 # the index of the current executing operation.
     # processes operation
     for operation in choreo:
-        fieldname = operation.leftside 
-        variables[fieldname] = None
-        return_message = {"op" : f"{operation} < {operation.args} \n"}
-        return_messages.append(return_message)
+        # increase operatingindex until it reaches currentindex.
+        operatingindex +=  1
+        if operatingindex < choreo.currentindex:
+            continue
+
+        # don't go over maxindex. (maxindex'th operation itself is not included)
+        if operatingindex >= choreo.maxindex:
+            break
+
+        # Execute operation
+
+        fieldname = operation.leftside # fieldname the result is assigned to
+
         for argname in operation.args:
             argument = operation.args[argname]
             try:
                 if  argument in variables:
-                    operation.args[argname] = variables[argument]
+                    operation.args[argname] = fromdict(variables[argument])
             except TypeError:
                 pass
 
+        logging.debug(f"executing op {operation} at index {operatingindex}")
 
         instance = None
-        if operation.clazz in variables:
-            instance = variables[operation.clazz]
-            try:
+        # execute
+        try:
+            if operation.clazz in variables:
+                # method call
+                instance = variables[operation.clazz]
                 instance = reflect.call(instance, operation.func, operation.args)
-                return_message["msg"] = f"The Method {operation.func} from instance {instance} with args: {operation.args} called."
-                return_message["status"] = "success"
-            except ValueError as ve:
-                logging.error(ve, exc_info=True)
-                return_message["msg"] = f"{ve}"
-                return_message["status"] = "error"
+                variables[fieldname] = instance
 
-        else:
-            path_list = _split_packages(operation.clazz)
-            if  "__construct" != operation.func:
-                path_list.append(operation.func)
-            try:
-                instance, class_name = reflect.construct(path_list, operation.args)
-                return_message["msg"] = f"Instance {instance} with type {class_name} created."
-                return_message["status"] = "success"
-            except ValueError as ve:
-                return_message["msg"] = f"{ve}"
-                return_message["status"] = "error"
+            elif operation.canexecute(variables):
+                # construction
+                path_list = _split_packages(operation.clazz)
+                if  "__construct" != operation.func:
+                    path_list.append(operation.func)
+                instance, _ = reflect.construct(path_list, operation.args)
+                variables[fieldname] = instance
+            else:
+                # forward
+                # If the class that has to be constructed isn't known/allowed by this server, call the next service:
+                compositionclient.forwardoperation(variables, operatingindex, choreo)
 
-        variables[fieldname] = instance
-    logging.debug("Execution logs: \n" + json.dumps(return_messages, sort_keys=True, \
-        indent=4, separators=(',', ': ')))
+            logging.debug(f"success index {operatingindex}")
+        except Exception as ex:
+            logging.error(ex, exc_info=True)
+    
     return_variables = {}
-    for return_name in choreo.return_list:
 
+    for return_name in choreo.return_list:
         if return_name in choreo.store_list:
-            continue # The id of this will be returned. see below.
-        
+            continue # The id of this will be returned. see below.        
         if  return_name in variables:
             instance = variables[return_name]
         else:
             instance = None
         return_variables[return_name] = instance
 
+    # store this object
     for store_name in choreo.store_list:
         if  store_name in variables:
             instance = variables[store_name]
@@ -187,7 +202,7 @@ def setuplogging():
     logging.basicConfig(filename=logfilepath,level=logging.DEBUG) 
 
 def bodystring_to_bodydict(body_string):
-    """ Creates a dict object from a string. 
+    """ Creates a dictionary object from a string. 
     This method conforms to the implementation of JASE, so the JASE-client can communicate with the server.
     If successfull it returns a dictionary with the following fields:
         - "execute" : Contains a string which represents the code from the composition to be executed
@@ -224,13 +239,14 @@ def bodystring_to_bodydict(body_string):
         request_dictionary["execute"] = choreography_string
         logging.debug(f"choreo: {choreography_string}")
 
-    if "currentindex" not in parameters:
-        request_dictionary["currentindex"] = 0
-    else:
+    if "currentindex" in parameters:
         request_dictionary["currentindex"] = parameters["currentindex"]
+    
+    if "maxindex" in parameters:
+        request_dictionary["maxindex"] = parameters["maxindex"]
 
     # json deserialise inputs and put them by their indexes into 'inputs' dictionary
-    inputs = {"arglist":[]}
+    inputs = {"$arglist$":[]}
     for key in parameters:
         if not key.startswith("inputs"):
             # this is not an input
@@ -241,26 +257,38 @@ def bodystring_to_bodydict(body_string):
         input_stringvalue = str(parameters[key])
         input_object = json.loads(input_stringvalue)
 
-        if not isinstance(input_object, dict) or "type" not in input_object:
-            # the json input doesn't have a type field.
-            raise ValueError(f"No type field in inputs[{index}]={input_stringvalue}")
-        if not config.lookup.check_type(input_object["type"]):
-            # The given type isn't known by the marshalling system.
-            type_ = input_object["type"]
-            raise ValueError(f"The given type = {type_} isn't known by the system.")
+        # Currently the type isn't checked by the system.
+        # if not isinstance(input_object, dict) or "type" not in input_object:
+        #     # the json input doesn't have a type field.
+        #     raise ValueError(f"No type field in inputs[{index}]={input_stringvalue}")
+        # if not config.lookup.check_type(input_object["type"]):
+        #     # The given type isn't known by the marshalling system.
+        #     type_ = input_object["type"]
+        #     raise ValueError(f"The given type = {type_} isn't known by the system.")
+        
+        # it is a keyword argument
+        inputs[index] = input_object
+
+        # Extract indexes into $arglist$ for single execution
         if re.match("^i[0-9]+$", index): 
             # if the index matches the pattern it is a positional argument. like i1, i2...
             # extract index: index = i10 -> index = 10
             index = int(index[1:]) 
-            # insert value in the arglist array in position=index:
-            inputs["arglist"][index] = input_object
-        else:
-            # it is a keyword argument
-            inputs[index] = input_object
+            # insert value in the $arglist$ array in position=index:
+            while len(inputs["$arglist$"]) <= index:
+                # List isn't big enough
+                inputs["$arglist$"].append(None)
+            inputs["$arglist$"][index] = input_object
+        
 
     request_dictionary["input"] = inputs
 
-    return request_dictionary
+    if ("execute" in request_dictionary):
+        # This is a choreography. 
+        return request_dictionary
+    else:
+        # This is a service call consisting of one operation. Return the inputs only.
+        return inputs
 
 def _split_packages(class_path):
     """ Splits the class_path by the '.' character. e.g.: _split_packages("package_name.module_name.Class_name") will return the list: ["package_name", "module_name", "Class_name"]

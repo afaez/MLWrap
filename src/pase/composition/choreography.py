@@ -12,11 +12,15 @@ class Choreography:
         return_list = string list of return values
         store_list = string list of store values.
     """
-    def __init__(self, operation_list, return_list, store_list):
+    def __init__(self, originalstring, operation_list, return_list, store_list, input_dict):
+        self.originalstring = originalstring
         self.operation_list = operation_list
         self.return_list = return_list
         self.store_list = store_list
+        self.input_dict = input_dict
         self.currentindex = 0
+        self.maxindex = len(operation_list)
+
 
     def __iter__(self):
         return iter(self.operation_list)
@@ -57,8 +61,8 @@ class Choreography:
             except Exception:
                 pass
         # Parse the input data
-        for inputkey in input_dict:
-            input_dict[inputkey] = pase.marshal.fromdict(input_dict[inputkey])
+        # for inputkey in input_dict:
+        #     input_dict[inputkey] = pase.marshal.fromdict(input_dict[inputkey])
 
         store_list = dictionary["store"] if "store" in dictionary else []
         
@@ -86,7 +90,7 @@ class Choreography:
                     assignname = None
                     calloperation = operation_string.strip()
             try:
-                op = Operation(assignname, calloperation, input_dict) # Try to parse the operation 
+                op = Operation(assignname, calloperation) # Try to parse the operation 
                 operation_list.append(op)
 
             except ValueError:
@@ -103,5 +107,12 @@ class Choreography:
             return_list = dictionary["return"]
 
         
-        return Choreography(operation_list, return_list, store_list) 
+        choreo = Choreography(dictionary["execute"], operation_list, return_list, store_list, input_dict) 
+
+        if "currentindex" in dictionary:
+            choreo.currentindex = int(dictionary["currentindex"])
+        if "maxindex" in dictionary:
+            choreo.maxindex = int(dictionary["maxindex"])
+
+        return choreo
         # Returns structure containing all operations and inputs and so on.

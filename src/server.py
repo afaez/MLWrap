@@ -21,6 +21,7 @@ jsonpickle_numpy.register_handlers()
 application = Flask(__name__)
 
 
+@application.route("/<class_path>/__construct", methods=['POST'])
 @application.route("/<class_path>", methods=['POST'])
 def create(class_path):
     # Request body contains constructor parameters
@@ -42,7 +43,7 @@ def call_method(class_path, id, method_name):
     if request.method == "GET":
         save = False
     jsondict, _ = parse_jsonbody()
-    print(f"Call method received: {class_path}:{id}:{method_name} < {jsondict}")
+    logging.debug(f"Call method received: {class_path}:{id}:{method_name} < {jsondict}")
     return_val1, return_val2 = servicehandler.call_method(class_path, id, method_name, jsondict)
     return return_val1
 
@@ -56,24 +57,12 @@ def retrieve_state(class_path, id):
     except ValueError as ve:
         return f"{ve}"
 
-@application.route("/<class_path>/<op>", methods=['POST'])
-def composition_request(class_path, op):
+@application.route("/choreography", methods=['POST'])
+def composition_request():
     # Parse body to json. json_content is true, if content-type is set to 'application/json'.
-    body, json_content = parse_jsonbody()
-    if json_content:
-        # Header has 'application/json', so it can't be from a Jase client.
-        print(body["input"])
-        return servicehandler.create(class_path+"."+op, body["input"])
-    else:
-        choreo = composition.Choreography.fromdict(body)
-        return servicehandler.execute_composition(choreo)
-
-# @application.route("/composition", methods=['POST'])
-# def composition_request():
-#     # Request body contains constructor parameters
-#     body = request.get_json()
-#     choreo = composition.Choreography.fromdict(body)
-#     return servicehandler.execute_composition(choreo)
+    body, _ = parse_jsonbody()
+    choreo = composition.Choreography.fromdict(body)
+    return servicehandler.execute_composition(choreo)
 
 def parse_jsonbody():
     """ Parses and returns the json body from the http request. 

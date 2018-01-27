@@ -1,5 +1,4 @@
 {
-
     "plainlib.package1.b.B" : {
         "wrapper":"wrappers.bWrap.BWrap"
     },
@@ -9,7 +8,12 @@
     "sklearn.preprocessing.normalize": {
         "wrapper" : "wrappers.sk.normalize_labeledinstances"
     },
-    "sklearn.linear_model.LinearRegression":{
-        "wrapper" : "wrappers.sk.WrappedPredictor"
-    }
+    "sklearn.tree.DecisionTreeClassifier":{
+        "wrapper" : "wrappers.sk.WrappedClassifier"
+    },
+    "sklearn.ensemble.RandomForestClassifier":{
+        "wrapper" : "wrappers.sk.WrappedClassifier"
+    },
+    "sklearn.linear_model.Ridge" : {},
+    "sklearn.linear_model.LinearRegression":{}
 }

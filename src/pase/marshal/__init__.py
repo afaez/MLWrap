@@ -1,4 +1,4 @@
-
+# TODO we need to implement the right marshalling system.
 import json
 import numpy
 import jsonpickle
@@ -30,7 +30,7 @@ def marshaldict(dict_):
 def fromdict(dict_):
     """ Parses from dictionary to Python Object:
     """
-    if "type" in dict_:
+    if isinstance(dict_, dict) and "type" in dict_:
         return dict_["data"]
     else:
         return dict_

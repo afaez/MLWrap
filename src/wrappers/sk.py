@@ -9,8 +9,12 @@ def normalize_labeledinstances(wrappedclass_module, kwargs):
     labeledinstances["instances"] = sklearn.preprocessing.normalize(instances, **kwargs)
     return labeledinstances
 
-
-class WrappedPredictor(wrappercore.DelegateFunctionsMixin):
+# Delegates other classes
+class WrappedClassifier(wrappercore.DelegateFunctionsMixin):
+    """ Wraps two functions: fit and predict.
+    fit has the new signature:  fit(LabeledInstances)::void
+    predict has the new signature: fit(Instances)::LabeledInstances
+    """
     # Maps labels to numerical values
     labelslist = []
     def __init__(self, wrappedclass_module, kwargs):
