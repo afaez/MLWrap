@@ -15,5 +15,8 @@
         "wrapper" : "wrappers.sk.WrappedClassifier"
     },
     "sklearn.linear_model.Ridge" : {},
-    "sklearn.linear_model.LinearRegression":{}
+    "sklearn.linear_model.LinearRegression":{},
+    "sklearn.preprocessing.Imputer": {
+        "wrapper" : "wrappers.sk.ImputerWrapper"
+    }
 }

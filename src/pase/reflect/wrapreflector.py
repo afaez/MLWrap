@@ -28,5 +28,3 @@ def construct(class_path_list, kwargs):
     wrapperinstance = wrapper_module(class_module, validated_param)
     # return the wrapper instance together with the fully qualified path name from the configuration.
     return wrapperinstance, config.lookup.fullname(class_path_string)
-
-    

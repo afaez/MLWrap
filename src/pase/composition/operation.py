@@ -59,7 +59,7 @@ class Operation:
                     if re.match("^i[0-9]+$", fieldname): 
                         # if the fieldname matches the pattern it is a positional argument. like i1, i2...
                         # extract fieldname: fieldname = i10 -> index = 10
-                        index = int(fieldname[1:]) 
+                        index = int(fieldname[1:]) - 1
                         # insert value in the $arglist$ array in position=index:
                         while len(self.args["$arglist$"]) <= index:
                             self.args["$arglist$"].append(None)

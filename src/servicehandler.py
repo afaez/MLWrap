@@ -75,7 +75,7 @@ def call_method(class_path, id, method_name, jsondict, copy=False):
         return_json = json.dumps(return_dict)
     else:
         # Parse the output to json.
-        return_json = marshal(return_value)
+        return_json = json.dumps(return_value)
 
     return return_json, {'Content-Type': 'application/json'}
 
@@ -103,7 +103,7 @@ def execute_composition(choreo):
 
     # check if currentindex is in range.
     if len(choreo.operation_list)<=choreo.currentindex:
-        logging.debug(f"body_string has less operations than the currentindex={choreo.currentindex} points to: {choreo}")
+        logging.error(f"body_string has less operations than the currentindex={choreo.currentindex} points to: {choreo}")
         return "nothing to execute", status.HTTP_400_BAD_REQUEST
     
     
@@ -113,6 +113,9 @@ def execute_composition(choreo):
     operatingindex = -1 # the index of the current executing operation.
     # processes operation
     for operation in choreo:
+        
+        logging.debug(f"Vars dict: {variables}")
+
         # increase operatingindex until it reaches currentindex.
         operatingindex +=  1
         if operatingindex < choreo.currentindex:
@@ -124,8 +127,20 @@ def execute_composition(choreo):
 
         # Execute operation
 
+        
         fieldname = operation.leftside # fieldname the result is assigned to
+        # fill positional arguments
+        referenced_argument = operation.args["$arglist$"]
+        filled_arguments = []
+        for argument in referenced_argument:
+            if  argument in variables:
+                    filled_arguments.append(fromdict(variables[argument]))
+            else:
+                    filled_arguments.append([argument])
+        # replace the list with the filled list
+        operation.args["$arglist$"] = filled_arguments
 
+        # fill keyword arguments
         for argname in operation.args:
             argument = operation.args[argname]
             try:
@@ -134,10 +149,10 @@ def execute_composition(choreo):
             except TypeError:
                 pass
 
-        logging.debug(f"executing op {operation} at index {operatingindex}")
+        logging.debug(f"executing op\"{operation}\" at index={operatingindex} with inputs={operation.args}")
 
         instance = None
-        # execute
+        # execute rightside function
         try:
             if operation.clazz in variables:
                 # method call
@@ -157,7 +172,7 @@ def execute_composition(choreo):
                 # If the class that has to be constructed isn't known/allowed by this server, call the next service:
                 compositionclient.forwardoperation(variables, operatingindex, choreo)
 
-            logging.debug(f"success index {operatingindex}")
+            logging.debug(f"success operation index={operatingindex}")
         except Exception as ex:
             logging.error(ex, exc_info=True)
     
@@ -181,6 +196,7 @@ def execute_composition(choreo):
             return_variables[store_name] = {"id": id, "class": class_name}
         else:
             return_variables[store_name] = None
+
     
     return marshaldict(return_variables)
 

@@ -47,7 +47,7 @@ def to_bodystring(currentindex, maxindex, inputs, coreographystring):
     for var in inputs:
         if var == "$arglist$":
             continue # don't parse arglist.
-        stringencoded = pase.marshal.marshal(inputs[var])
+        stringencoded = json.dumps(inputs[var])
         returnstring += f"&inputs[{var}]={stringencoded}"
     return returnstring
 

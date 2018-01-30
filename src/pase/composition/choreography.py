@@ -99,9 +99,10 @@ class Choreography:
         if(return_all):
             # add all to be created instances to the return list
             return_list = []
-            for operation in operation_list:
-                if operation.leftside is not "empty":
-                    return_list.append(operation.leftside)
+            # for operation in operation_list:
+            #     if operation.leftside is not "empty":
+            #         return_list.append(operation.leftside)
+            return_list.append(operation_list[-1].leftside)
         else:
             # retrieve return list from the input dictionary
             return_list = dictionary["return"]

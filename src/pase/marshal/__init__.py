@@ -18,6 +18,7 @@ def marshal(output):
         # If it is json serializable, do it:
         return_json = json.dumps(output)
     except TypeError:
+        pass
         # Else just parse it to string and return its string represtation. 
         return_json = jsonpickle.dumps(output, unpicklable=False)
     return return_json
@@ -25,6 +26,7 @@ def marshal(output):
 def marshaldict(dict_):
     for key in dict_:
         dict_[key] = marshaltype(dict_[key])
+        
     return marshal(dict_) 
 
 def fromdict(dict_):
