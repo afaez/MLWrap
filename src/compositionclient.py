@@ -47,7 +47,10 @@ def to_bodystring(currentindex, maxindex, inputs, coreographystring):
     for var in inputs:
         if var == "$arglist$":
             continue # don't parse arglist.
-        stringencoded = json.dumps(inputs[var])
-        returnstring += f"&inputs[{var}]={stringencoded}"
+        try:
+            stringencoded = pase.marshal.marshaldict(inputs[var])
+            returnstring += f"&inputs[{var}]={stringencoded}"
+        except Exception as ex:
+            logging.error("Error when parsing state in composition client: " + ex)
     return returnstring
 

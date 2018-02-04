@@ -1,4 +1,6 @@
+""" Wraps scikit learn libreries. """
 from wrappers import wrappercore
+import pase.marshal
 import sklearn.preprocessing
 
 def normalize_labeledinstances(wrappedclass_module, kwargs):
@@ -7,19 +9,31 @@ def normalize_labeledinstances(wrappedclass_module, kwargs):
     labeledinstances = kwargs.pop('X', None)
     instances = labeledinstances["instances"]
     labeledinstances["instances"] = sklearn.preprocessing.normalize(instances, **kwargs)
-    return labeledinstances
+    
+    state_entry = {"data": labeledinstances, "type" :"LabeledInstances"}
+    return state_entry
 
-# Delegates other classes
-class WrappedClassifier(wrappercore.DelegateFunctionsMixin):
-    """ Wraps two functions: fit and predict.
-    fit has the new signature:  fit(LabeledInstances)::void
-    predict has the new signature: fit(Instances)::LabeledInstances
+class WrappedClassifier(wrappercore.DelegateFunctionsMixin, wrappercore.BaseClassifierMixin):
+    """ Wraps two functions: train and predict.
+    declare_classes has the signature: declare_classes(LabeledInstances)::void
+    fit (also callable by 'train') has the new signature:  fit(LabeledInstances)::void
+    predict has the new signature: predict(Instances)::LabeledInstances
     Classifiers can deal with classes as strings themselves.
     """
     def __init__(self, wrappedclass_module, kwargs):
         wrappedinstance  = wrappedclass_module(**kwargs) 
         # initialize the DelegateFunctionsMixin with the created wrapped object.
         wrappercore.DelegateFunctionsMixin.__init__(self, delegate=wrappedinstance)
+
+    def declare_classes(self, X):
+        """ Does nothing for now.
+        """
+        pass
+
+    def train(self, X):
+        """ Redirects to fit.
+        """
+        self.fit(X)
 
     def fit(self, X):
         """ X is a labeledinstances object for example: {"instances":[[1.0,2.0],[3.0,4.0]],"labels":["A","B"]}
@@ -28,32 +42,19 @@ class WrappedClassifier(wrappercore.DelegateFunctionsMixin):
         self.delegate.fit(X["instances"], X["labels"])
 
     def predict(self, X):
-        # X is now instances object for example: [[1.0,2.0,3.0],[4.0,5.0,6.0]]
-        # X may also be a dictionary object of labeledinstances. (Used when testing with labeledinstances)
+        """ X is instances object for example: [[1.0,2.0,3.0],[4.0,5.0,6.0]]
+        X may also be a dictionary object of labeledinstances. (Used when testing with labeledinstances)
+        """
         if(isinstance(X, dict)):
             X = X["instances"]
         prediction = self.delegate.predict(X)
         # prediction is an array of classes: ["A", "B", ..]
-        return prediction
 
-    def predict_and_score(self, X, normalize=True):
-        """ First predicts the input objects using the predict method. Then calculated the accuracy of the model and return it.
-        X: LabeledInstance
-        normalize: If ``False``, return the number of correctly classified samples.
-        Otherwise, return the fraction of correctly classified samples.
-        """
-        y_pred = self.predict(X)
-        y_true = X["labels"]
-        matching = y_true == y_pred # array of 1 and 0, based on if it was a match or not.
-        score = matching.sum() # count matches.
-        if normalize:
-            score = float(score) / len(y_pred) # normalize if needed.
-            return score
-        else:
-            return int(score)
+        state_entry = {"data": prediction, "type" :"StringList"}
+        return state_entry
 
 # Delegates other classes
-class WrappedPredictorToClassifier(wrappercore.DelegateFunctionsMixin):
+class WrappedNumClassifier(wrappercore.DelegateFunctionsMixin, wrappercore.BaseClassifierMixin):
     """ Wraps a predictor to Work like a classifier.
     fit has the new signature:  fit(LabeledInstances)::void
     predict has the new signature: fit(Instances)::LabeledInstances
@@ -64,6 +65,9 @@ class WrappedPredictorToClassifier(wrappercore.DelegateFunctionsMixin):
         wrappedinstance  = wrappedclass_module(**kwargs) 
         # initialize the DelegateFunctionsMixin with the created wrapped object.
         wrappercore.DelegateFunctionsMixin.__init__(self, delegate=wrappedinstance)
+
+    def train(self, X):
+        return self.fit(X)
 
     def fit(self, X):
         # X is now a labeledinstances object for example: {"instances":[[1.0,2.0],[3.0,4.0]],"labels":["A","B"]}
@@ -80,6 +84,8 @@ class WrappedPredictorToClassifier(wrappercore.DelegateFunctionsMixin):
     def predict(self, X):
         # X is now instances object for example: [[1.0,2.0,3.0],[4.0,5.0,6.0]]
         # First predict to numerical values
+        if(isinstance(X, dict)):
+            X = X["instances"]
         prediction = self.delegate.predict(X)
         labeledprediction = []
         # now map back to labels
@@ -117,6 +123,7 @@ class ImputerWrapper(wrappercore.DelegateFunctionsMixin):
         imputedinstances = self.delegate.transform(X["instances"])
         X_copy = dict(X)
         X_copy["instances"] = imputedinstances
-        return X_copy
+        state_entry = {"data" : X_copy, "type": "LabeledInstances"}
+        return state_entry
 
 

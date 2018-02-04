@@ -11,7 +11,7 @@ class Operation:
     # The string before the first '/' . contains the host name this operation is to be executed on.
     host = "$empty$"
     # The left side string of the equal sign. contains the object name which will be assigned to the return value of this operation.
-    leftside = "$empty$"
+    leftside = "empty"
     # The right side string of the equal sign. contains 'clazz', 'func' and 'args' as string.
     rightside = ""
     # The substring that comes before '::' in rightside. contains the class path or object name.

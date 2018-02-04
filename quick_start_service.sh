@@ -17,4 +17,4 @@ if [ "$1" = "" ]; then # No port was specified.
 fi
 # Run service using gunicorn:
 cd "src"
-gunicorn --bind 0.0.0.0:$1 server --timeout 100000 --keep-alive 1000 --log-level debug
+gunicorn --bind 0.0.0.0:$1 server --timeout 16 --keep-alive 10 --log-level debug

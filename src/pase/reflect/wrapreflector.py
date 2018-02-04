@@ -23,7 +23,7 @@ def construct(class_path_list, kwargs):
     except ModuleNotFoundError as ex:
         raise ValueError(f"{ex}")
     # validate parameters
-    validated_param = reflector.validate_parameters(kwargs, class_module)
+    validated_param = reflector.validate_parameters(kwargs, class_module, weak = True)
     # create the wrapper instance
     wrapperinstance = wrapper_module(class_module, validated_param)
     # return the wrapper instance together with the fully qualified path name from the configuration.

@@ -18,5 +18,12 @@
     "sklearn.linear_model.LinearRegression":{},
     "sklearn.preprocessing.Imputer": {
         "wrapper" : "wrappers.sk.ImputerWrapper"
+    },
+    "tflib.NeuralNet" : {
+        "classname": "tflib.neuralnet.NeuralNet",
+        "wrapper" : "wrappers.tf.WrappedNeuralNet"
+    },
+    "sklearn.neural_network.MLPClassifier" : {
+        "wrapper" : "wrappers.sk.WrappedNumClassifier"
     }
 }

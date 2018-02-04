@@ -12,7 +12,6 @@ def _extract_arglist(kwargs):
     """ Extracts '$arglist$' array from kwargs dictionary. 
     If kwargs['$arglist$'] doesn't map to a list, this method returns an empty list
     """
-    args = []
     if( "$arglist$" in kwargs):
         args = kwargs["$arglist$"]
     if args is None or not isinstance(args, list):
@@ -20,13 +19,12 @@ def _extract_arglist(kwargs):
         args = []
     return args
 
-def validate_parameters(given_param, callable_):
+def validate_parameters(given_param, callable_, weak = False):
     """ validates the parameters from the given_param and fills it with the argument from given_param_list and returns a clean paramter dictionary which matches the signature of the callable_.
     Parameters:
         given_param: Dictionary given to call the callable_
-        callable_: Python callable object. Can be a function or a constructor.
-        given_param_list: contains the list of positional arguments which are given by the client. 
-            
+        callable_: Python callable object. Can be a function or a constructor. 
+        weak: if true, is doesn't check if every necessary argument is found in given_param.
     Returns: 
         A sanitized parameter dictionary that can be used to call the callable_.
     Raises:
@@ -38,6 +36,7 @@ def validate_parameters(given_param, callable_):
     if(given_param is None):
         given_param = {}
     # Extract args from kwargs
+    # given_param_list: contains the list of positional arguments which are given by the client.
     given_param_list = _extract_arglist(given_param)
     # iterate over every parameter:
     for param_key in signature_.parameters:
@@ -50,7 +49,7 @@ def validate_parameters(given_param, callable_):
             # Copy parameters to the validated dictionary:
             validated_dict[param_key] = given_param[param_key]
 
-        elif(signature_.parameters[param_key].default == inspect._empty): # No default is set.
+        elif(not weak and signature_.parameters[param_key].default == inspect._empty): # No default is set.
             # The parameter wasn't sent by the client. 
             raise ValueError(error.const.parameter_is_mandatory.format(f"{param_key}"))
 

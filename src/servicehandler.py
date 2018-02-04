@@ -4,7 +4,7 @@ from flask_api import status
 import json
 from pase import store 
 from pase import reflect 
-from pase.marshal import marshal, marshaldict, fromdict
+from pase.marshal import marshal, marshaldict, unmarshal
 from pase import composition 
 from pase import config
 import pase.constants.error_msg as error
@@ -114,7 +114,7 @@ def execute_composition(choreo):
     # processes operation
     for operation in choreo:
         
-        logging.debug(f"Vars dict: {variables}")
+        #logging.debug(f"Vars dict: {variables}")
 
         # increase operatingindex until it reaches currentindex.
         operatingindex +=  1
@@ -134,9 +134,9 @@ def execute_composition(choreo):
         filled_arguments = []
         for argument in referenced_argument:
             if  argument in variables:
-                    filled_arguments.append(fromdict(variables[argument]))
+                    filled_arguments.append(unmarshal(variables[argument]))
             else:
-                    filled_arguments.append([argument])
+                    filled_arguments.append(argument)
         # replace the list with the filled list
         operation.args["$arglist$"] = filled_arguments
 
@@ -145,11 +145,11 @@ def execute_composition(choreo):
             argument = operation.args[argname]
             try:
                 if  argument in variables:
-                    operation.args[argname] = fromdict(variables[argument])
+                    operation.args[argname] = unmarshal(variables[argument])
             except TypeError:
                 pass
 
-        logging.debug(f"executing op\"{operation}\" at index={operatingindex} with inputs={operation.args}")
+        logging.debug(f"executing op\"{operation}\" at index={operatingindex}") # with inputs={operation.args}")
 
         instance = None
         # execute rightside function
