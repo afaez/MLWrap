@@ -29,6 +29,38 @@ def get_wrapper(class_path):
     """
     return getclassesdirectoryentry(class_path)["wrapper"]
 
+def method_defined(class_path, method_name):
+    """ Returns true if the classpath is defined in the classes configuration and if the methods name is defined in its 'methods' field.
+    """
+    if not class_known(class_path):
+        return False
+    classconfig = getclassesdirectoryentry(class_path)
+
+    if "methods" in classconfig:
+        return method_name in classconfig["methods"]
+    else:
+        return True
+
+def get_methods(class_path):
+    """ Returns the dictionary containing the methods of the class path.
+    """
+    classconfig = getclassesdirectoryentry(class_path)
+    if "methods" in classconfig:
+        return classconfig["methods"]
+    else:
+        return dict()
+
+def method_returntype(class_path, method_name):
+    """ Returns true if the method is included in the methods field of the classpath.
+    If no methods field is defined all methods are allowed.
+    """
+    methods = get_methods(class_path)
+    if method_name in methods:
+        return methods[method_name]["return_type"]
+    else:
+        return None
+
+
 def fullname(callable_path):
     """ Returns the fully qualified name of the instance returned by callable.
     """

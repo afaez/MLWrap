@@ -12,6 +12,7 @@ def _extract_arglist(kwargs):
     """ Extracts '$arglist$' array from kwargs dictionary. 
     If kwargs['$arglist$'] doesn't map to a list, this method returns an empty list
     """
+    args = []
     if( "$arglist$" in kwargs):
         args = kwargs["$arglist$"]
     if args is None or not isinstance(args, list):
@@ -52,7 +53,7 @@ def validate_parameters(given_param, callable_, weak = False):
         elif(not weak and signature_.parameters[param_key].default == inspect._empty): # No default is set.
             # The parameter wasn't sent by the client. 
             raise ValueError(error.const.parameter_is_mandatory.format(f"{param_key}"))
-
+    logging.debug("validated dict: " + str(validated_dict.keys()))
     return validated_dict
 
 def fullname(o):

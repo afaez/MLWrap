@@ -1,7 +1,9 @@
 # TODO we need to implement the right marshalling system.
 import json
-import numpy
 import jsonpickle
+import numpy
+from pase.pase_dataobject import PASEDataObject
+from pase.marshal.typeserializer import serialize, unserialize
 
 def marshaltype(instance):
     if isinstance(instance, numpy.ndarray):
@@ -34,10 +36,12 @@ def marshaldict(dict_):
         
     return marshal(dict_) 
 
-def unmarshal(dict_):
+def unmarshal(value):
     """ Parses from dictionary to Python Object:
     """
-    if isinstance(dict_, dict) and "type" in dict_:
-        return marshaltype(dict_["data"])
+    if isinstance(value, dict) and "type" in value:
+        return marshaltype(value["data"])
+    elif isinstance(value, PASEDataObject):
+        return value.data
     else:
-        return marshaltype(dict_)
+        return value

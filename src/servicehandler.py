@@ -2,6 +2,8 @@ from flask import Flask
 from flask import request
 from flask_api import status
 import json
+from pase.servicehandle import ServiceHandle
+from pase.pase_dataobject import PASEDataObject
 from pase import store 
 from pase import reflect 
 from pase.marshal import marshal, marshaldict, unmarshal
@@ -34,9 +36,9 @@ def create(class_path, body):
     # Save the instance object and create a new id:
     try:
         id = store.save(class_name, instance)
-        return_dict = {"id": id, "class": class_name}
-        return_json = json.dumps(return_dict)
-        return return_json, {'Content-Type': 'application/json'}
+        service = ServiceHandle.local_service(class_name, id, instance)
+        return service
+        
     except Exception as ex:
         # some internal error occurred.
         return_msg = str(ex)
@@ -52,10 +54,8 @@ def copy_instance(class_path, id):
 
     # Save the instance object as a new instance and create a new id:
     new_id = store.save(class_path, instance)
-    return_dict = {"id": new_id, "class": class_path}
-    return_json = json.dumps(return_dict)
-    return return_json, {'Content-Type': 'application/json'}
-
+    service = ServiceHandle.local_service(class_path, new_id, instance)
+    return service
 
 def call_method(class_path, id, method_name, jsondict, copy=False):
     """ Calls method and saves the return value as a new instance. 
@@ -71,13 +71,9 @@ def call_method(class_path, id, method_name, jsondict, copy=False):
         # Save the return object as a new instance and create a new id:
         class_name = reflect.fullname(return_value)
         new_id = store.save(class_name, return_value)
-        return_dict = {"id": new_id, "class": class_name}
-        return_json = json.dumps(return_dict)
-    else:
-        # Parse the output to json.
-        return_json = json.dumps(return_value)
+        # TODO
 
-    return return_json, {'Content-Type': 'application/json'}
+    return return_value
 
 def _call_method(class_path, id, method_name, params):
     """ Handles the logic behind calling the method. 
@@ -110,6 +106,7 @@ def execute_composition(choreo):
     # variables are a copy of input_dict
     variables = dict(choreo.input_dict)
 
+    logging.debug("variables: " + str(variables.keys()))
     operatingindex = -1 # the index of the current executing operation.
     # processes operation
     for operation in choreo:
@@ -122,12 +119,11 @@ def execute_composition(choreo):
             continue
 
         # don't go over maxindex. (maxindex'th operation itself is not included)
-        if operatingindex >= choreo.maxindex:
+        if  choreo.maxindex != -1 and operatingindex >= choreo.maxindex:
             break
 
         # Execute operation
 
-        
         fieldname = operation.leftside # fieldname the result is assigned to
         # fill positional arguments
         referenced_argument = operation.args["$arglist$"]
@@ -148,26 +144,33 @@ def execute_composition(choreo):
                     operation.args[argname] = unmarshal(variables[argument])
             except TypeError:
                 pass
-
+        # print(f"executing op\"{operation}\" at index={operatingindex} with inputs={str(operation.args)[0:100]}")
         logging.debug(f"executing op\"{operation}\" at index={operatingindex}") # with inputs={operation.args}")
 
         instance = None
         # execute rightside function
         try:
+            executed = False
             if operation.clazz in variables:
                 # method call
                 instance = variables[operation.clazz]
-                instance = reflect.call(instance, operation.func, operation.args)
-                variables[fieldname] = instance
+                if isinstance(instance, ServiceHandle) and not instance.is_remote():
+                    serviceInstance = instance.service
+                    returnvalue = reflect.call(serviceInstance, operation.func, operation.args)
+                    variables[fieldname] = returnvalue
+                    executed = True
 
-            elif operation.canexecute(variables):
+            elif config.lookup.class_known(operation.clazz + "." + operation.func):
                 # construction
                 path_list = _split_packages(operation.clazz)
                 if  "__construct" != operation.func:
                     path_list.append(operation.func)
-                instance, _ = reflect.construct(path_list, operation.args)
-                variables[fieldname] = instance
-            else:
+                instance, classpath = reflect.construct(path_list, operation.args)
+                service_id = store.save(classpath, instance)
+                service = ServiceHandle.local_service(classpath, service_id, instance)
+                variables[fieldname] = service
+                executed = True
+            if not executed:
                 # forward
                 # If the class that has to be constructed isn't known/allowed by this server, call the next service:
                 compositionclient.forwardoperation(variables, operatingindex, choreo)
@@ -175,30 +178,35 @@ def execute_composition(choreo):
             logging.debug(f"success operation index={operatingindex}")
         except Exception as ex:
             logging.error(ex, exc_info=True)
-    
+        
+        # logging.debug(f"state after op:{variables}")
+
+        # END OF FOR LOOP
+
+    # write all the local servicehandlers to disk:
+    for fieldname in variables:
+        handle = variables[fieldname]
+        if not isinstance(handle, ServiceHandle):
+            continue
+        if not handle.is_remote():
+            logging.debug(f"Writing {handle} to disk.")
+            store.save(handle.classpath, handle.service, handle.id)
+
     return_variables = {}
 
-    for return_name in choreo.return_list:
-        if return_name in choreo.store_list:
-            continue # The id of this will be returned. see below.        
+    for return_name in choreo.return_list:      
         if  return_name in variables:
             instance = variables[return_name]
         else:
             instance = None
         return_variables[return_name] = instance
 
-    # store this object
-    for store_name in choreo.store_list:
-        if  store_name in variables:
-            instance = variables[store_name]
-            class_name = reflect.fullname(instance)
-            id = store.save(class_name, instance)
-            return_variables[store_name] = {"id": id, "class": class_name}
-        else:
-            return_variables[store_name] = None
+    # print("serializing " + str(return_variables)) 
+    returnbody = composition.Choreography.todict(variables=return_variables)
 
-    
-    return marshaldict(return_variables)
+
+    # print("Returning : " + str(returnbody)[0:3000])
+    return json.dumps(returnbody)
 
 def setuplogging():
     """ Takes care of setting up the logging. If this method isn't used, 'WARNING' logs will be printed to stdout. 

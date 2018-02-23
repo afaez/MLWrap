@@ -1,4 +1,8 @@
-from tflib import arff
+try:
+    from tflib import arff
+except:
+    import arff
+    
 
 def parse(arff_, is_path = True, dense_mode = True):
     """ Opens and reads the file located at path. 
@@ -19,7 +23,7 @@ def parse(arff_, is_path = True, dense_mode = True):
             else:
                 mode = arff.LOD
             arff_parsed = arff.load(arff_data, return_type=mode,  encode_nominal=True)
-        except: # excpetion is thrown when sparsed data is loaded in DENSE mode.
+        except: # exception is thrown when sparsed data is loaded in DENSE mode.
             if dense_mode:
                 arff_parsed = parse(arff_, is_path, False)# arff may be in sparse formate
 
@@ -86,7 +90,7 @@ class ArffStructure:
                 break
             class_index += 1
         
-        if not hasattr(self, 'class_list'):
+        if not hasattr(self, 'class_list') or self.class_list is None:
              # class list couldn't be found. use last tupel in attributes_list instead
             self.class_list = attributes_list.pop()[1]
             class_index = len(attributes_list)
@@ -170,10 +174,12 @@ class ArffStructure:
             arffstruct.__dict__[ "out_size"] = len(classlabels)
             arffstruct.__dict__[ "input_matrix"] =  instances
             output_matrix= []
+            
             # onehot output
             for label in labels:
                 output_matrix.append([])
                 for class_label in classlabels:
                     output_matrix[-1].append( 1 if class_label == label else 0)
+
             arffstruct.__dict__[ "output_matrix"] =  output_matrix
             return arffstruct

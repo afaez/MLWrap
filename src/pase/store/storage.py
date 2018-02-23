@@ -2,7 +2,8 @@
 import os
 import uuid 
 import pase.constants.error_msg as error
-import jsonpickle
+# import jsonpickle
+import pickle
 
 def _topath(class_name):
     return  "../data/" + class_name
@@ -56,22 +57,23 @@ def save(class_name, instance, id = None):
     path = _tofilepath(class_name, id)
     # file pointer
     # w+ overwrites the existing file if the file exists. If the file does not exist, creates a new file for reading and writing.
-    file = open(path, "w+") 
+    file_ = open(path, "wb+") 
 
     # Serialize the object:
-    jsonstring = jsonpickle.encode(instance)
+    # jsonstring = jsonpickle.encode(instance)
+    pickle.dump(instance, file_)
 
-    file.write(jsonstring)
-    file.close()
+    # file.write(jsonstring)
+    file_.close()
     
     return id
 
 def restore(class_name, id):
     # Retrieve the json serialized state
-    jsonstring = restore_state(class_name, id)
+    instance = restore_state(class_name, id)
     
     # Decode and return the instance.
-    instance = jsonpickle.decode(jsonstring)
+    # instance = jsonpickle.decode(jsonstring)
     return instance
 
 def restore_state(class_name, id):
@@ -84,14 +86,14 @@ def restore_state(class_name, id):
     path = _tofilepath(class_name,id)
     # file pointer
     # r opens a file for reading only. 
-    file = open(path, "r") 
-    jsonstring = file.read()
-    file.close()
+    file_ = open(path, "rb") 
+    jsonstring = pickle.load(file_)
+    file_.close()
     return jsonstring
 
 def readfile(path):
-    return open(path, "r")
+    return open(path, "rb")
 
 def writefile(path):
-    return open(path, "w")
+    return open(path, "wb")
 

@@ -2,6 +2,7 @@
 from wrappers import wrappercore
 import pase.marshal
 import sklearn.preprocessing
+from pase.pase_dataobject import PASEDataObject
 
 def normalize_labeledinstances(wrappedclass_module, kwargs):
     """ Wrapper for method.
@@ -10,8 +11,8 @@ def normalize_labeledinstances(wrappedclass_module, kwargs):
     instances = labeledinstances["instances"]
     labeledinstances["instances"] = sklearn.preprocessing.normalize(instances, **kwargs)
     
-    state_entry = {"data": labeledinstances, "type" :"LabeledInstances"}
-    return state_entry
+    dataobject = PASEDataObject("LabeledInstances", labeledinstances)
+    return dataobject
 
 class WrappedClassifier(wrappercore.DelegateFunctionsMixin, wrappercore.BaseClassifierMixin):
     """ Wraps two functions: train and predict.
@@ -49,9 +50,10 @@ class WrappedClassifier(wrappercore.DelegateFunctionsMixin, wrappercore.BaseClas
             X = X["instances"]
         prediction = self.delegate.predict(X)
         # prediction is an array of classes: ["A", "B", ..]
+        dataobject = PASEDataObject("StringList", prediction.tolist())
+        return dataobject
 
-        state_entry = {"data": prediction, "type" :"StringList"}
-        return state_entry
+
 
 # Delegates other classes
 class WrappedNumClassifier(wrappercore.DelegateFunctionsMixin, wrappercore.BaseClassifierMixin):
@@ -101,6 +103,7 @@ class WrappedNumClassifier(wrappercore.DelegateFunctionsMixin, wrappercore.BaseC
                 labeled_outcome = self.labelslist[-1] # last label
             labeledprediction.append(labeled_outcome)
         
+        dataobject = PASEDataObject("StringList", labeledprediction)
         return labeledprediction
 
 class ImputerWrapper(wrappercore.DelegateFunctionsMixin):
@@ -123,7 +126,7 @@ class ImputerWrapper(wrappercore.DelegateFunctionsMixin):
         imputedinstances = self.delegate.transform(X["instances"])
         X_copy = dict(X)
         X_copy["instances"] = imputedinstances
-        state_entry = {"data" : X_copy, "type": "LabeledInstances"}
-        return state_entry
+        dataobject = PASEDataObject("LabeledInstances", X_copy)
+        return dataobject
 
 

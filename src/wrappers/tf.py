@@ -2,6 +2,7 @@
 
 from wrappers import wrappercore
 import pase.marshal
+from pase.pase_dataobject import PASEDataObject
 import jsonpickle
 import jsonpickle.handlers
 from tflib.neuralnet import NeuralNet
@@ -59,8 +60,10 @@ class WrappedNeuralNet(wrappercore.BaseClassifierMixin):
 
     def create_nn(self):
         neuralnet = NeuralNet(self.layer_count, self.in_size, self.out_size)
+        # print(f"created nn with: layer_count={self.layer_count}, in_size={self.in_size}, out_size={self.out_size}")
         if not self.trained:
             neuralnet.nn_create(load = False)
+            # print("nn_create without loaded weights")
         else:
             # print("creating neural net with stats " + str(self.model_values))
             neuralnet.nn_create(load = True, weights_biases_values = self.model_values)
@@ -109,6 +112,8 @@ class WrappedNeuralNet(wrappercore.BaseClassifierMixin):
         self.declare_classes(X) # if declare classes was defined before checks if all labels are known.
         arffstruct = ArffStructure.from_labeledinstances(X, self.classlabels) # parse labeled instances
 
+
+
         if not self.trained:
             # set dimensions this is the first train call
             self.in_size = arffstruct.in_size
@@ -143,7 +148,9 @@ class WrappedNeuralNet(wrappercore.BaseClassifierMixin):
             raise ValueError(f"Dimension of the given labeledinstance is (in,out)=({arffstruct.in_size},{arffstruct.out_size} but the trained model only accepts (in,out)=({self.in_size},{self.out_size}).")
         
         neuralnet = self.create_nn()
-        return {"type":"StringList", "data":neuralnet.nn_predict(arffstruct)}
+        prediction = neuralnet.nn_predict(arffstruct)
+        dataobject = PASEDataObject("StringList", prediction)
+        return dataobject
     
 
 

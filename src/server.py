@@ -4,7 +4,7 @@ from flask_api import status
 import json
 from pase import store as store
 from pase import reflect as reflect
-from pase.marshal import marshal as marshal
+from pase.marshal import unmarshal
 from pase import composition as composition
 import pase.constants.error_msg as error
 import jsonpickle.ext.numpy as jsonpickle_numpy
@@ -24,75 +24,84 @@ application = Flask(__name__)
 @application.route("/<class_path>/__construct", methods=['POST'])
 @application.route("/<class_path>", methods=['POST'])
 def create(class_path):
+    inputs = parse_inputs()
     # Request body contains constructor parameters
-    jsondict, _ = parse_jsonbody()
-    # Delegate call to the servicehandler
-    return servicehandler.create(class_path, jsondict)
+    servicehandle = servicehandler.create(class_path, inputs)
+
+    returnbody = create_body({"out":servicehandle})
+    return returnbody, {'Content-Type': 'application/json'}
 
 @application.route("/<class_path>/copy/<id>", methods=['GET'])
 def copy_instance(class_path, id):
-    return servicehandler.copy_instance(class_path, id)
+    servicehandle = servicehandler.copy_instance(class_path, id)
+
+    returnbody = create_body({"out":servicehandle})
+    return returnbody, {'Content-Type': 'application/json'}
 
 @application.route("/<class_path>/copy/<id>/<method_name>", methods=['POST', 'GET'])
 def copy_call_method(class_path, id, method_name):
-    jsondict, _ = parse_jsonbody()
-    return servicehandler.call_method(class_path, id, method_name, jsondict, copy=True)
+    inputs = parse_inputs()
+    vars = servicehandler.call_method(class_path, id, method_name, inputs, copy=True)
+    
+    returnbody = create_body({"out":vars})
+    return returnbody, {'Content-Type': 'application/json'}
 
 @application.route("/<class_path>/<id>/<method_name>", methods=['POST', 'GET'])
 def call_method(class_path, id, method_name):
     if request.method == "GET":
         save = False
-    jsondict, _ = parse_jsonbody()
-    logging.debug(f"Call method received: {class_path}:{id}:{method_name} < {jsondict}")
-    return_val1, return_val2 = servicehandler.call_method(class_path, id, method_name, jsondict)
-    return return_val1
+    inputs = parse_inputs()
+    logging.debug(f"Call method received: {class_path}:{id}:{method_name} < {inputs}")
+    return_val = servicehandler.call_method(class_path, id, method_name, inputs)
 
-@application.route("/<class_path>/<id>", methods=['GET'])
-def retrieve_state(class_path, id):
-    """ Returns the json serialized state of the object of the given id.
-    """
-    try:
-        # Recover the instance from the memory:
-        instance = store.restore(class_path, id)
-    except ValueError as ve:
-        return f"{ve}"
+    returnbody = create_body({"out":return_val})
+    return returnbody, {'Content-Type': 'application/json'}
+
 
 @application.route("/choreography", methods=['POST'])
 def composition_request():
     # Parse body to json. json_content is true, if content-type is set to 'application/json'.
-    body, _ = parse_jsonbody()
+    body = parse_jsonbody()
     choreo = composition.Choreography.fromdict(body)
+
     return servicehandler.execute_composition(choreo)
+
+def create_body(variables):
+    """ Creates the return body of the given variabeles
+    """
+    if not isinstance(variables, dict):
+        raise ValueError("Can't parse to body: " + variables)
+    
+    returnbody = composition.Choreography.todict(variables=variables)
+    return_string = json.dumps(returnbody)
+    return return_string
+
+
+def parse_inputs():
+    """ Parses body of the request and extracts the inputs and returns the deserialisation.
+    """
+    jsonBody = parse_jsonbody()
+    inputs = composition.Choreography.fromdict(jsonBody, translate_positional_args=False).input_dict
+    for argname in inputs:
+        inputs[argname] = unmarshal(inputs[argname]) # unwrap the values from PASEDataobjects
+    return inputs
+
 
 def parse_jsonbody():
     """ Parses and returns the json body from the http request. 
-    Returns an empty dictionary in case the http request body can't be parsed as a json string.
     """
-    #print(request.headers.get('content-type'))
-    if 'application/json' in request.headers.get('content-type').lower() :
-        # force means that mimetypes are ignored. 
-        # (So there is no need for 'application/json' in the header.)
-        # silent means that in case of a fail it won't raise an exception.
-        body = request.get_json(force = True, silent = True) 
-        #logging.debug(f"read body{body}")
-        if body is None:
-            body = {} # put empty dict in case of an invalid syntax.
-        jsoncontent = True
-    else:
-        # read inputstream directly and decode it to string:
-        string_body = readhttpstream()
-        body = servicehandler.bodystring_to_bodydict(string_body)
-        jsoncontent = False
-        
-    return body, jsoncontent
+    # read inputstream directly and decode it to string:
+    string_body = readhttpstream()
+    body = json.loads(string_body)
+    return body
 
 
 def readhttpstream():
     """ Reads the bytes in the http stream and returns the decoded string.
     """
-    length = request.headers.get("Content-Length", type = int)
+    request.environ['wsgi.input_terminated'] = True
     data = bytearray()
-    chunk_size = length
+    chunk_size = 4096
     while True:
         # Read chunk from the stream
         chunk = request.stream.read(chunk_size)
@@ -102,10 +111,10 @@ def readhttpstream():
         else :
             # chunk is empty
             break
-    #print("---> Sream length: \n", len(data)) 
+    logging.debug("---> Sream length: %(a)d", {'a':len(data)})
     # Decode data using utf-8 and replace.
     decodeddata = data.decode("utf-8", "replace")
-    #print("---> Sream: \n", decodeddata[:])
+    # logging.debug(f"---> Sream content: {decodeddata}")
     return decodeddata
 
 

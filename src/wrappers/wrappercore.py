@@ -1,6 +1,6 @@
 """ Defines usefull mixins that can be extended by wrapper classes.
 """
-
+ATTRIBUTE_BLACKLIST = ["__getstate__", "__setstate__"]
 class DelegateFunctionsMixin(object):
     """ Delegate accesses to a delegate.
     """
@@ -12,12 +12,14 @@ class DelegateFunctionsMixin(object):
         """ Attributes are accessed that aren't defined by the subclass. 
         Redirect to delegate if it is defined.
         """
-        if self.delegate is not None and hasattr(self.delegate, name):
+        if name not in ATTRIBUTE_BLACKLIST and self.delegate is not None and hasattr(self.delegate, name):
             return getattr(self.delegate, name)
         else:
             getattr(super(),name)
+    
 
 import pase.marshal
+
 class BaseClassifierMixin(object):
 
     def declare_classes(self, X):

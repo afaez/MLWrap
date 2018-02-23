@@ -2,6 +2,7 @@
 """
 import json
 import re # regular expression
+from pase.servicehandle import ServiceHandle
 
 class Operation:
     """ This class parses an operation of the form: 
@@ -81,7 +82,11 @@ class Operation:
             # this is a constructor:
             return pase.config.lookup.class_known(self.clazz + "." + self.func)
         else:
-            return True
+            field = state[self.clazz]
+            if isinstance(field, ServiceHandle):
+                return not field.is_remote()
+            else:
+                return False
             # # return true if all arguments the operation needs
             # return all(argument_ in stat for argument_ in self.args)
 
