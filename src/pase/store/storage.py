@@ -2,15 +2,16 @@
 import os
 import uuid 
 import pase.constants.error_msg as error
-import jsonpickle
+# import jsonpickle
+import pickle
 
 def _topath(class_name):
-    return  "data/" + class_name
+    return  "../data/" + class_name
 
 def _tofilepath(class_name, id):
-    return "data/" + class_name + "/" + id
+    return "../data/" + class_name + "/" + id
 
-def _do_error_checks(class_name, instance, id = None):
+def _do_error_checks(class_name, id = None):
     """ Private function that checks if parameters are chosen without errors.
     """
      # Boundary checks.
@@ -24,11 +25,11 @@ def _do_error_checks(class_name, instance, id = None):
     # If id is given we need to check if the instance was saved before. (The storage module is the one who defines ids)
     if id is not None:
         if(not os.path.isfile(_tofilepath(class_name, id))):
-            raise ValueError(error.const.instance_with_id_doesnt_exist.format(f"{instance}", class_name, id))
+            raise ValueError(error.const.instance_with_id_doesnt_exist.format("", class_name, id))
 
 
 def save(class_name, instance, id = None):
-    """ save can be used to create or save an instance under its class name.
+    """ save can be used to save an instance under its class name.
     Params:
     class_name: string of class name of instance with its full path. If Class Bar is in module bar in package foo class_name would be: "foo.bar.Bar"
     instance: python instance which is to be saved.
@@ -36,7 +37,7 @@ def save(class_name, instance, id = None):
     
     """
     # Check for boundry errors.
-    _do_error_checks(class_name, instance, id)
+    _do_error_checks(class_name, id)
     if(instance is None):
         raise ValueError(error.const.is_null.format("instance"))
     #if(not isinstance(instance, class_name)):
@@ -56,27 +57,28 @@ def save(class_name, instance, id = None):
     path = _tofilepath(class_name, id)
     # file pointer
     # w+ overwrites the existing file if the file exists. If the file does not exist, creates a new file for reading and writing.
-    file = open(path, "w+") 
+    file_ = open(path, "wb+") 
 
     # Serialize the object:
-    jsonstring = jsonpickle.encode(instance)
+    # jsonstring = jsonpickle.encode(instance)
+    pickle.dump(instance, file_)
 
-    file.write(jsonstring)
-    file.close()
+    # file.write(jsonstring)
+    file_.close()
     
     return id
 
 def restore(class_name, id):
     # Retrieve the json serialized state
-    jsonstring = restore_state(class_name, id)
+    instance = restore_state(class_name, id)
     
     # Decode and return the instance.
-    instance = jsonpickle.decode(jsonstring)
+    # instance = jsonpickle.decode(jsonstring)
     return instance
 
 def restore_state(class_name, id):
     # Boundary checks.
-    _do_error_checks(class_name, None, id)
+    _do_error_checks(class_name, id)
     # restore needs id to be assigend.
     if(id == None): 
         raise ValueError(error.const.is_null.format("id"))
@@ -84,7 +86,14 @@ def restore_state(class_name, id):
     path = _tofilepath(class_name,id)
     # file pointer
     # r opens a file for reading only. 
-    file = open(path, "r") 
-    jsonstring = file.read()
-    file.close()
+    file_ = open(path, "rb") 
+    jsonstring = pickle.load(file_)
+    file_.close()
     return jsonstring
+
+def readfile(path):
+    return open(path, "rb")
+
+def writefile(path):
+    return open(path, "wb")
+

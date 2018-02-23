@@ -1,0 +1,34 @@
+{
+    "plainlib.package1.b.B" : {
+        "wrapper":"wrappers.bWrap.BWrap"
+    },
+    "plainlib.package1.b.B.random": {
+        "classname": "plainlib.package1.b.B"
+    },
+    "$base_sk_classifier_config$":{
+        "wrapper" : "wrappers.sk.WrappedClassifier",
+        "methods": {"train" : {}, "predict" : {"return_type":"StringList"}, "predict_and_score" : {"return_type":"StringList"}}
+    },
+    "sklearn.preprocessing.normalize": {
+        "wrapper" : "wrappers.sk.normalize_labeledinstances"
+    },
+    "sklearn.tree.DecisionTreeClassifier":{
+        "wrapper" : "wrappers.sk.WrappedClassifier"
+    },
+    "sklearn.ensemble.RandomForestClassifier":{
+        "wrapper" : "wrappers.sk.WrappedClassifier"
+    },
+    "sklearn.linear_model.Ridge" : {},
+    "sklearn.linear_model.LinearRegression":{},
+
+    "sklearn.preprocessing.Imputer": {
+        "wrapper" : "wrappers.sk.ImputerWrapper"
+    },
+    "tflib.NeuralNet" : {
+        "classname": "tflib.neuralnet.NeuralNet",
+        "wrapper" : "wrappers.tf.WrappedNeuralNet"
+    },
+    "sklearn.neural_network.MLPClassifier" : {
+        "wrapper" : "wrappers.sk.WrappedNumClassifier"
+    }
+}

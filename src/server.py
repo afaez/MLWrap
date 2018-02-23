@@ -2,151 +2,121 @@ from flask import Flask
 from flask import request
 from flask_api import status
 import json
-import numpy
-import jsonpickle
 from pase import store as store
 from pase import reflect as reflect
-import pase.params.config as config
+from pase.marshal import unmarshal
+from pase import composition as composition
 import pase.constants.error_msg as error
-
-app = Flask(__name__)
 import jsonpickle.ext.numpy as jsonpickle_numpy
+import servicehandler
+import logging
 
+#setup logging.
+servicehandler.setuplogging()
+
+# register handlers for jacksonpickle to be used with numpy.
 jsonpickle_numpy.register_handlers()
 
+# flask application 
+application = Flask(__name__)
 
-@app.route("/<class_path>", methods=['POST'])
+
+@application.route("/<class_path>/__construct", methods=['POST'])
+@application.route("/<class_path>", methods=['POST'])
 def create(class_path):
-    # Check if requested class is in the configuration whitelist.
-    if not config.is_in_whitelist(class_path):
-        return error.const.class_is_not_accessible.format(class_path), status.HTTP_405_METHOD_NOT_ALLOWED
-        
-
-    # Split the class_path into a list of paths.
-    path_list = _split_packages(class_path)
+    inputs = parse_inputs()
     # Request body contains constructor parameters
-    body = request.get_json()
+    servicehandle = servicehandler.create(class_path, inputs)
 
-    # If path list is empty or only contains one value, return error:
-    if len(path_list) < 2:
-        return error.const.no_package_was_sent, status.HTTP_400_BAD_REQUEST
-    # Create the instance objects:
-    try:
-        instance, class_name = reflect.construct(path_list, body)
-    except ValueError as ve:
-        return f"{ve}", status.HTTP_400_BAD_REQUEST
-    # Save the instance object and create a new id:
-    id = store.save(class_name, instance)
-    return_dict = {"id": id, "class": class_name}
-    return_json = json.dumps(return_dict)
-    return return_json, {'Content-Type': 'application/json'}
+    returnbody = create_body({"out":servicehandle})
+    return returnbody, {'Content-Type': 'application/json'}
 
-@app.route("/<class_path>/copy/<id>", methods=['GET'])
+@application.route("/<class_path>/copy/<id>", methods=['GET'])
 def copy_instance(class_path, id):
-    # Copies this instance into another instance and returns the new id.
-    try:
-        # Recover the instance from the memory:
-        instance = store.restore(class_path, id)
-    except ValueError as ve:
-        return f"{ve}"
+    servicehandle = servicehandler.copy_instance(class_path, id)
 
-    # Save the instance object as a new instance and create a new id:
-    new_id = store.save(class_path, instance)
-    return_dict = {"id": new_id, "class": class_path}
-    return_json = json.dumps(return_dict)
-    return return_json, {'Content-Type': 'application/json'}
+    returnbody = create_body({"out":servicehandle})
+    return returnbody, {'Content-Type': 'application/json'}
 
-@app.route("/<class_path>/copy/<id>/<method_name>", methods=['POST', 'GET'])
+@application.route("/<class_path>/copy/<id>/<method_name>", methods=['POST', 'GET'])
 def copy_call_method(class_path, id, method_name):
-    """ Calls method and saves the return value as a new instance. Returns classname and id of the saved return value.
-    """
-    try:
-        return_value = _call_method(class_path, id, method_name)
-    except Exception as ex:
-        return f"{ex}", status.HTTP_400_BAD_REQUEST
-
-    # Save the return object as a new instance and create a new id:
-    class_name = reflect.fullname(return_value)
-    new_id = store.save(class_name, return_value)
-    return_dict = {"id": new_id, "class": class_name}
-    return_json = json.dumps(return_dict)
-    return return_json, {'Content-Type': 'application/json'}
-
-@app.route("/<class_path>/safe/<id>/<method_name>", methods=['POST', 'GET'])
-def call_method_(class_path, id, method_name):
-    # This route guarantees that the state of the object doesn't change.
-    return call_method(class_path, id, method_name, save = False)
-
-@app.route("/<class_path>/<id>/<method_name>", methods=['POST', 'GET'])
-def call_method(class_path, id, method_name, save = True):
-    if request.method == 'GET'  :
-        save = False # Get doesn't change server state.
-
-    try:
-        return_value = _call_method(class_path, id, method_name, save)
-    except Exception as ex:
-        return f"{ex}", status.HTTP_400_BAD_REQUEST
-
-    # Parse the output to json.
-    return_json = _serialize_output(return_value)
-
-    return return_json, {'Content-Type': 'application/json'}
-
-def _call_method(class_path, id, method_name, save = False):
-    """ Handles calling the method. 
-    """
-    # Executes the method call 
-    # Parse the parameters from the body:
-    if request.method != 'GET'  :
-        params = request.get_json()
-    else: 
-        params = {}
-    # Recover the instance from the memory:
-    instance = store.restore(class_path, id)
-
-
-    # Call the requested function or attribute:
-    return_value = reflect.call(instance, method_name, params)
+    inputs = parse_inputs()
+    vars = servicehandler.call_method(class_path, id, method_name, inputs, copy=True)
     
-    # Change the state of the instance if HTTP method is PUT.
-    # (POST guarantees that the state doesn't change.)
-    if save:
-        store.save(class_path, instance, id)
-        
-    return return_value
+    returnbody = create_body({"out":vars})
+    return returnbody, {'Content-Type': 'application/json'}
 
-@app.route("/<class_path>/<id>", methods=['GET'])
-def retrieve_state(class_path, id):
-    """ Returns the json serialized state of the object of the given id.
+@application.route("/<class_path>/<id>/<method_name>", methods=['POST', 'GET'])
+def call_method(class_path, id, method_name):
+    if request.method == "GET":
+        save = False
+    inputs = parse_inputs()
+    logging.debug(f"Call method received: {class_path}:{id}:{method_name} < {inputs}")
+    return_val = servicehandler.call_method(class_path, id, method_name, inputs)
+
+    returnbody = create_body({"out":return_val})
+    return returnbody, {'Content-Type': 'application/json'}
+
+
+@application.route("/choreography", methods=['POST'])
+def composition_request():
+    # Parse body to json. json_content is true, if content-type is set to 'application/json'.
+    body = parse_jsonbody()
+    choreo = composition.Choreography.fromdict(body)
+
+    return servicehandler.execute_composition(choreo)
+
+def create_body(variables):
+    """ Creates the return body of the given variabeles
     """
-    try:
-        # Recover the instance from the memory:
-        instance = store.restore(class_path, id)
-
-    except ValueError as ve:
-        return f"{ve}"
-
-    return _serialize_output(instance), {'Content-Type': 'application/json'}
+    if not isinstance(variables, dict):
+        raise ValueError("Can't parse to body: " + variables)
+    
+    returnbody = composition.Choreography.todict(variables=variables)
+    return_string = json.dumps(returnbody)
+    return return_string
 
 
-def _split_packages(class_path):
-    """ Splits the class_path by the '.' character. e.g.: _split_packages("package_name.module_name.Class_name") will return the list: ["package_name", "module_name", "Class_name"]
+def parse_inputs():
+    """ Parses body of the request and extracts the inputs and returns the deserialisation.
     """
-    return class_path.split(".")
+    jsonBody = parse_jsonbody()
+    inputs = composition.Choreography.fromdict(jsonBody, translate_positional_args=False).input_dict
+    for argname in inputs:
+        inputs[argname] = unmarshal(inputs[argname]) # unwrap the values from PASEDataobjects
+    return inputs
 
-def _serialize_output(output):
-    """ Returns the json serialized output of function calls which is sent back to clients:
+
+def parse_jsonbody():
+    """ Parses and returns the json body from the http request. 
     """
-    # TODO: How should we return the return value?
-    if isinstance(output, numpy.ndarray):
-        output = output.tolist()
-    try:
-        # If it is json serializable, do it:
-        return_json = json.dumps(output)
-    except TypeError:
-        # Else just parse it to string and return its string represtation. 
-        return_json = jsonpickle.dumps(output, unpicklable=False)
-    return return_json
+    # read inputstream directly and decode it to string:
+    string_body = readhttpstream()
+    body = json.loads(string_body)
+    return body
+
+
+def readhttpstream():
+    """ Reads the bytes in the http stream and returns the decoded string.
+    """
+    request.environ['wsgi.input_terminated'] = True
+    data = bytearray()
+    chunk_size = 4096
+    while True:
+        # Read chunk from the stream
+        chunk = request.stream.read(chunk_size)
+        if len(chunk) != 0:
+            # put data into array
+            data.extend(chunk)
+        else :
+            # chunk is empty
+            break
+    logging.debug("---> Sream length: %(a)d", {'a':len(data)})
+    # Decode data using utf-8 and replace.
+    decodeddata = data.decode("utf-8", "replace")
+    # logging.debug(f"---> Sream content: {decodeddata}")
+    return decodeddata
+
 
 if __name__ == '__main__':
     # Retrieve the command line argument to use as a port number.
@@ -157,5 +127,6 @@ if __name__ == '__main__':
     except:
         pass
     # Run the server
-    app.run(host='localhost', port=port_, debug = config.DEBUGGING)
+    import pase.config
+    application.run(host='localhost', port=port_, debug = pase.config.debugging())
 
