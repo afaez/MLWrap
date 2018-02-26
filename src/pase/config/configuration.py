@@ -89,7 +89,3 @@ CLASSES_DICT = json.load(_classes_file)
 _classes_file.close()
 
 resolve_inheritance(CLASSES_DICT)
-
-
-
-

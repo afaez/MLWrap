@@ -20,7 +20,7 @@ class NeuralNet:
         self._log = log
         self.in_size = in_size
         self.out_size = out_size
-        self.layers_count = layers_count
+        self.layers_count = int(layers_count)
 
 
     def nn_create(self, deviation = 0.1, load = False, weights_biases_values = []):

@@ -8,6 +8,7 @@ import jsonpickle.handlers
 from tflib.neuralnet import NeuralNet
 from tflib.arffcontainer import ArffStructure
 
+
 class NeuralNetHandler(jsonpickle.handlers.BaseHandler):    
     # handler for jsonpickle to save a neuralnet object
     def flatten(self, obj, data):
@@ -36,8 +37,7 @@ class NeuralNetHandler(jsonpickle.handlers.BaseHandler):
 # Register this handler for the class
 jsonpickle.handlers.registry.register(NeuralNet, NeuralNetHandler)
 
-
-class WrappedNeuralNet(wrappercore.BaseClassifierMixin):
+class WrappedNeuralNet(wrappercore.BaseClassifierMixin, wrappercore.BaseOptionsSetterMixin):
     """ Wrapper for neuralnet module in tflib.
     Offers our standard methods: declare_classes, train and predict
     declare_classes has the signature: declare_classes(LabeledInstances)::void
@@ -46,16 +46,23 @@ class WrappedNeuralNet(wrappercore.BaseClassifierMixin):
     Classifiers can deal with classes as strings themselves.
     """
     model_values = None
+    layer_count = 2
     def __init__(self, wrappedclass_module, kwargs):
         # wrappedinstance  = wrappedclass_module(**kwargs) 
         # initialize the DelegateFunctionsMixin with the created wrapped object.
-        if(isinstance(kwargs, dict)): # its called from wrappedreflector
-            self.layer_count = kwargs["layers_count"]
-        else:
-            self.layer_count = kwargs 
+
+        wrappercore.BaseOptionsSetterMixin.optionsFromDict(self, kwargs)
         self.trained = False
             
-        
+    def get_params(self):
+        return {
+            "layer_count" : self.layer_count
+        }
+    
+    def set_params(self, **parameterdict):
+        if "layer_count" in parameterdict:
+            self.layer_count = int(parameterdict["layer_count"])
+
 
 
     def create_nn(self):
@@ -151,20 +158,3 @@ class WrappedNeuralNet(wrappercore.BaseClassifierMixin):
         prediction = neuralnet.nn_predict(arffstruct)
         dataobject = PASEDataObject("StringList", prediction)
         return dataobject
-    
-
-
-    
-
-    
-
-
-
-        
-
-
-
-
-
-            
-        
