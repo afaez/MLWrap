@@ -99,67 +99,118 @@
 
 
 
-    "$base_sk_feautureselect_config$":{
-        "wrapper" : "wrappers.sk.AttrSelectWrapper"
+    "$base_sk_pp_config$":{
+        "wrapper" : "wrappers.sk.SkPPWrapper"
     },
     "sklearn.decomposition.FastICA":{
-        "extends" : ["$base_sk_feautureselect_config$"]
+        "extends" : ["$base_sk_pp_config$"]
     },
     "sklearn.feature_selection.GenericUnivariateSelect":{
-        "extends" : ["$base_sk_feautureselect_config$"]
+        "extends" : ["$base_sk_pp_config$"]
     },
     "sklearn.manifold.Isomap":{
-        "extends" : ["$base_sk_feautureselect_config$"]
+        "extends" : ["$base_sk_pp_config$"]
     },
     "sklearn.manifold.LocallyLinearEmbedding":{
-        "extends" : ["$base_sk_feautureselect_config$"]
+        "extends" : ["$base_sk_pp_config$"]
     },
     "sklearn.manifold.MDS":{
-        "extends" : ["$base_sk_feautureselect_config$"]
+        "extends" : ["$base_sk_pp_config$"]
     },
     "sklearn.decomposition.MiniBatchDictionaryLearning":{
-        "extends" : ["$base_sk_feautureselect_config$"]
+        "extends" : ["$base_sk_pp_config$"]
     },
     "sklearn.decomposition.NMF":{
-        "extends" : ["$base_sk_feautureselect_config$"]
+        "extends" : ["$base_sk_pp_config$"]
     },
     "sklearn.feature_selection.SelectFdr":{
-        "extends" : ["$base_sk_feautureselect_config$"]
+        "extends" : ["$base_sk_pp_config$"]
     },
     "sklearn.feature_selection.SelectFpr":{
-        "extends" : ["$base_sk_feautureselect_config$"]
+        "extends" : ["$base_sk_pp_config$"]
     },
     "sklearn.feature_selection.SelectFwe":{
-        "extends" : ["$base_sk_feautureselect_config$"]
+        "extends" : ["$base_sk_pp_config$"]
     },
     "sklearn.feature_selection.SelectKBest":{
-        "extends" : ["$base_sk_feautureselect_config$"]
+        "extends" : ["$base_sk_pp_config$"]
     },
     "sklearn.feature_selection.SelectPercentile":{
-        "extends" : ["$base_sk_feautureselect_config$"]
+        "extends" : ["$base_sk_pp_config$"]
     },
     "sklearn.random_projection.SparseRandomProjection":{
-        "extends" : ["$base_sk_feautureselect_config$"]
+        "extends" : ["$base_sk_pp_config$"]
     },
     "sklearn.manifold.SpectralEmbedding":{
-        "extends" : ["$base_sk_feautureselect_config$"]
+        "extends" : ["$base_sk_pp_config$"]
     },
     "sklearn.manifold.TSNE":{
-        "extends" : ["$base_sk_feautureselect_config$"]
+        "extends" : ["$base_sk_pp_config$"]
     },
     "sklearn.feature_selection.VarianceThreshold":{
-        "extends" : ["$base_sk_feautureselect_config$"]
+        "extends" : ["$base_sk_pp_config$"]
+    },
+
+
+    "sklearn.kernel_approximation.AdditiveChi2Sampler":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.neural_network.BernoulliRBM": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.preprocessing.Binarizer": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.decomposition.DictionaryLearning": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.decomposition.FactorAnalysis": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.random_projection.GaussianRandomProjection": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.covariance.GraphLasso": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.covariance.GraphLassoCV": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.preprocessing.Imputer": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.preprocessing.KernelCenterer": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.decomposition.LatentDirichletAllocation": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+
+    "sklearn.preprocessing.MaxAbsScaler": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.preprocessing.MinMaxScaler": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.preprocessing.Normalizer": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.preprocessing.QuantileTransformer": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.linear_model.RandomizedLogisticRegression": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.preprocessing.RobustScaler": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.preprocessing.StandardScaler": {
+        "extends" : ["$base_sk_pp_config$"]
     },
 
 
     "sklearn.preprocessing.normalize": {
         "wrapper" : "wrappers.sk.normalize_labeledinstances"
-    },
-    "sklearn.linear_model.Ridge" : {},
-    "sklearn.linear_model.LinearRegression":{},
-
-    "sklearn.preprocessing.Imputer": {
-        "wrapper" : "wrappers.sk.ImputerWrapper"
     },
     "tflib.NeuralNet" : {
         "classname": "tflib.neuralnet.NeuralNet",

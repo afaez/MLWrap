@@ -50,14 +50,14 @@ def forwardoperation(state, currentindex, choreography):
             if variable.host == hostname: 
                 # if the host we are contacting is the owner of the service,
                 #  rewrite host of the servicehandle as "local"
-                forwardedinputs[variable] = variable.with_host("local")
+                forwardedinputs[variablename] = variable.with_host("local")
         else:
             forwardedinputs[variablename] = variable
             
     logging.debug(f"forwarding to {hostname} with inputs fieldnames {[fieldname for fieldname in forwardedinputs]}")
 
     payload = to_bodystring(currentindex, maxindex, forwardedinputs, choreography.originalstring)
-    url = "http://" + nextoperation.host + "/choreography"
+    url = "http://" + hostname + "/choreography"
     responsestring = requests.request("POST", url, data=payload, headers={}).text
     # logging.debug(f"Received a return from a forwarded call: {responsestring}")
     try:

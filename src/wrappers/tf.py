@@ -47,6 +47,9 @@ class WrappedNeuralNet(wrappercore.BaseClassifierMixin, wrappercore.BaseOptionsS
     """
     model_values = None
     layer_count = 2
+    epochs = 1000
+    learning_rate = 0.3
+    batch_size = 900
     def __init__(self, wrappedclass_module, kwargs):
         # wrappedinstance  = wrappedclass_module(**kwargs) 
         # initialize the DelegateFunctionsMixin with the created wrapped object.
@@ -56,12 +59,21 @@ class WrappedNeuralNet(wrappercore.BaseClassifierMixin, wrappercore.BaseOptionsS
             
     def get_params(self):
         return {
-            "layer_count" : self.layer_count
+            "layer_count" : self.layer_count,
+            "epochs" : self.epochs,
+            "learning_rate" : self.learning_rate,
+            "batch_size" : self.batch_size
         }
     
     def set_params(self, **parameterdict):
         if "layer_count" in parameterdict:
             self.layer_count = int(parameterdict["layer_count"])
+        if "epochs" in parameterdict:
+            self.epochs = int(parameterdict["epochs"])
+        if "learning_rate" in parameterdict:
+            self.learning_rate = float(parameterdict["learning_rate"])
+        if "batch_size" in parameterdict:
+            self.layer_count = int(parameterdict["batch_size"])
 
 
 
@@ -133,7 +145,7 @@ class WrappedNeuralNet(wrappercore.BaseClassifierMixin, wrappercore.BaseOptionsS
 
         # now train the neural net
         neuralnet = self.create_nn()
-        self.model_values = neuralnet.nn_train(arffstruct = arffstruct)
+        self.model_values = neuralnet.nn_train(arffstruct = arffstruct, epochs = self.epochs, learning_rate = self.learning_rate, batch_size = self.batch_size)
         self.trained = True
 
     def predict(self, X):

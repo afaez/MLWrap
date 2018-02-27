@@ -92,10 +92,10 @@ class NeuralNet:
                         axis=1), name = "cross_entropy")
 
         
-        ##self.sum_square = tf.reduce_sum(tf.square(self.y_ - self.y)) # Use minimize cross entropy instead
+        # self.sum_square = tf.reduce_sum(tf.square(self.y_ - self.y)) # Use minimize cross entropy instead
     # END OF CREATE FUNCITON
 
-    def nn_train(self, arffstruct, epochs = 10, learning_rate = 0.15, batch_size = 30):
+    def nn_train(self, arffstruct, epochs = 1000, learning_rate = 0.3, batch_size = 900):
         """ Trains the neural net with data from arffstruct, which is a arffcontainer.ArffStructur instance.
             load: boolean, if true, nn_train first restores the net weights and biases from previous checkpoint from the given path.
             path: path of the tensorflow checkpoint folder, to restore when load is True. Also used to store the net at the end of the training
@@ -137,7 +137,7 @@ class NeuralNet:
                                 feed_dict={ self.x: arffstruct.input_matrix[batch_start:batch_end],
                                             self.y: arffstruct.output_matrix[batch_start:batch_end]})
                     avg_cost += c / total_set_size
-                #self.log(f"Epoch {epoch+1}: cost = {avg_cost:.3f}")
+                self.log(f"Epoch {epoch+1}: cost = {avg_cost:.3f}")
             accuracy_result =sess.run(accuracy, feed_dict={self.x : arffstruct.input_matrix, self.y: arffstruct.output_matrix})
             self.log(f"accuracy:{accuracy_result}")
 
@@ -204,8 +204,9 @@ def nodes_count_formula(layers_count, in_count, out_count, layer_index):
     # m : gradient is calculated: (y2-y1)/(x2-x1), x1(first layer), y1 = in_count, x2(last layer), y2 = out_count
     # c : contant. is in_count.
     """
-    m = ((math.sqrt(out_count) - math.sqrt(in_count)))/layers_count 
-    c = math.sqrt(in_count)
-    nodes_count = 2 * int((m * (layer_index+1)) + c + 0.5)  
-    return nodes_count 
+    return int((in_count + out_count) / 2)
+    # m = ((math.sqrt(out_count) - math.sqrt(in_count)))/layers_count 
+    # c = math.sqrt(in_count)
+    # nodes_count = 2 * int((m * (layer_index+1)) + c + 0.5)  
+    # return nodes_count 
 

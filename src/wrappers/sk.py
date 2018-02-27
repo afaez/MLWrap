@@ -111,9 +111,10 @@ class WrappedNumClassifier(wrappercore.DelegateFunctionsMixin, wrappercore.BaseC
         return labeledprediction
 
 
-class AttrSelectWrapper(wrappercore.DelegateFunctionsMixin, wrappercore.BaseOptionsSetterMixin):
+class SkPPWrapper(wrappercore.DelegateFunctionsMixin, wrappercore.BaseOptionsSetterMixin):
     """ Wraps the feature selection classes in scikit.
     """
+    trained = False
     def __init__(self, wrappedclass_module, kwargs):
         wrappedinstance  = wrappedclass_module() 
         # initialize the DelegateFunctionsMixin with the created wrapped object.
@@ -125,6 +126,7 @@ class AttrSelectWrapper(wrappercore.DelegateFunctionsMixin, wrappercore.BaseOpti
         """ 
         # call fit method with instances only
         self.delegate.fit(X["instances"]) 
+        self.trained = True
 
     def transform(self, X):
         output = self.delegate.transform(X["instances"])
@@ -133,19 +135,11 @@ class AttrSelectWrapper(wrappercore.DelegateFunctionsMixin, wrappercore.BaseOpti
         dataobject = PASEDataObject("LabeledInstances", X_copy)
         return dataobject
 
-    def fit_transform(self, X):
-        """ X is labeledinstances object.
-        """ 
-        self.fit(X)
-        return self.transform(X)
 
-    def fit_reduce(self, X):
-        return  self.fit_transform(X)
+    def preprocess(self, X):
+        if not self.trained:
+            self.fit(X)
 
-    def SelectAttributes(self, X):
-        return  self.fit(X)
-    
-    def reduceDimensionality(self, X):
         return self.transform(X)
 
 class ImputerWrapper(wrappercore.DelegateFunctionsMixin, wrappercore.BaseOptionsSetterMixin):
