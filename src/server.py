@@ -2,6 +2,7 @@ from flask import Flask
 from flask import request
 from flask_api import status
 import json
+import htmlparser
 from pase import store as store
 from pase import reflect as reflect
 from pase.marshal import unmarshal
@@ -20,6 +21,11 @@ jsonpickle_numpy.register_handlers()
 # flask application 
 application = Flask(__name__)
 
+@application.route("/logs/<range>", methods=['GET'])
+def read_logs(range):
+
+    msg = servicehandler.getlogs(int(range))
+    return htmlparser.parse(msg)
 
 @application.route("/<class_path>/__construct", methods=['POST'])
 @application.route("/<class_path>", methods=['POST'])

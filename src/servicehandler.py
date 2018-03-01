@@ -208,22 +208,78 @@ def execute_composition(choreo):
     # print("Returning : " + str(returnbody)[0:3000])
     return json.dumps(returnbody)
 
+def getlogs(logrange):
+    import os.path
+    directory = '../logs'
+    if logrange <= 0:
+        logrange = 1
+    if not os.path.isdir(directory):
+        return "Error: no log folder found."
+    highest_index = -1
+    logfilename = "/pase_{}.log"
+    logfilepath = None
+    index = 0
+    while highest_index == -1:
+        logfilepath = directory + logfilename.format(index)
+        if os.path.isfile(logfilepath):
+            index += 1
+        else:
+            highest_index = index
+            
+    if highest_index == -1:
+        return "No logs found."
+
+    min_index = highest_index - logrange
+
+    if min_index < 0:
+        min_index = 0
+
+    allcontent = {}
+
+    for index in range(min_index, highest_index):
+        logfilepath = directory + logfilename.format(index)
+        with open(logfilepath, 'r') as logfile:
+            contentlist = logfile.readlines()
+            allcontent["log"+ str(index)] = contentlist
+    return allcontent
+
+
+
+    
+
 def setuplogging():
     """ Takes care of setting up the logging. If this method isn't used, 'WARNING' logs will be printed to stdout. 
     """
     import datetime
     now  = datetime.datetime.now()
     import pathlib
+    import os.path
     # directory where the logs are collected
     directory = '../logs'
     # create log directory if it doesn't exist
     pathlib.Path(directory).mkdir(parents=True, exist_ok=True) 
     # logfile  path definition
-    logfilepath = directory + "/pase_{}.log".format(now.strftime("%Y-%m-%d_%H-%M-%S"))
-    print("logging in " + logfilepath)
+    # logfilename = "/pase_{}.log".format(now.strftime("%Y-%m-%d_%H-%M-%S"))
+    logfilename = "/pase_{}.log"
+    logfilepath = None
+    index = 0
+    while logfilepath is None:
+        logfilepath = directory + logfilename.format(index)
+        if os.path.isfile(logfilepath):
+            logfilepath = None
+            index += 1
+
     # logs will be written to the ^ upper ^ logfile.
     # TODO get logging lvl from configuration
-    logging.basicConfig(filename=logfilepath,level=logging.DEBUG) 
+
+    logging.basicConfig(
+                    level=logging.DEBUG,
+                    format='%(asctime)s %(levelname)-8s %(message)s',
+                    datefmt='%a, %d %b %Y %H:%M:%S',
+                    filename=logfilepath,
+                    filemode='w')
+
+    print("logging into " + logfilepath)
 
 def bodystring_to_bodydict(body_string):
     """ Creates a dictionary object from a string. 
