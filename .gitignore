@@ -174,3 +174,7 @@ src/data
 data
 test.py
 log.txt
+src/sk_params.json
+src/out.txt
+src/predicates.txt
+src/script.txt
