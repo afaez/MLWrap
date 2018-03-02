@@ -12,8 +12,6 @@ import jsonpickle.ext.numpy as jsonpickle_numpy
 import servicehandler
 import logging
 
-#setup logging.
-servicehandler.setuplogging()
 
 # register handlers for jacksonpickle to be used with numpy.
 jsonpickle_numpy.register_handlers()
@@ -21,10 +19,9 @@ jsonpickle_numpy.register_handlers()
 # flask application 
 application = Flask(__name__)
 
-@application.route("/logs/<range>", methods=['GET'])
-def read_logs(range):
-
-    msg = servicehandler.getlogs(int(range))
+@application.route("/logs", methods=['GET'])
+def read_logs():
+    msg = servicehandler.getlogs()
     return htmlparser.parse(msg)
 
 @application.route("/<class_path>/__construct", methods=['POST'])
@@ -136,7 +133,22 @@ if __name__ == '__main__':
         port_ = int(sys.argv[1]) # port is the first command line argument.
     except:
         pass
+
+    import os
+    #setup logging.
+    servicehandler.setuplogging(id = os.getpid())
+
     # Run the server
     import pase.config
     application.run(host='localhost', port=port_, debug = pase.config.debugging())
 
+if __name__ == 'server':
+
+    import os
+    #setup logging.
+    servicehandler.setuplogging(id = os.getpid())
+    try:
+        import sys
+        print()
+    except:
+        pass

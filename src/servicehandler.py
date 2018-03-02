@@ -217,55 +217,34 @@ def execute_composition(choreo):
     # print("Returning : " + str(returnbody)[0:3000])
     return returnbody
 
-def getlogs(logrange):
+def getlogs():
     import os.path
-    directory = '../logs'
-    if logrange <= 0:
-        logrange = 1
-    if not os.path.isdir(directory):
+    import os
+    directory_in_str = '../logs'
+    if not os.path.isdir(directory_in_str):
         return "Error: no log folder found."
-    highest_index = -1
-    logfilename = "/pase_{}.log"
-    logfilepath = None
-    index = 0
-    while highest_index == -1:
-        logfilepath = directory + logfilename.format(index)
-        if os.path.isfile(logfilepath):
-            index += 1
-        else:
-            highest_index = index
-            
-    if highest_index == -1:
-        return "No logs found."
 
-    min_index = highest_index - logrange
-
-    if min_index < 0:
-        min_index = 0
-
+    directory = os.fsencode(directory_in_str)
     allcontent = {}
-
-    for index in range(min_index, highest_index):
-        logfilepath = directory + logfilename.format(index)
+    for file in os.listdir(directory):
+        filename = os.fsdecode(file)
+        logfilepath = os.path.join(directory_in_str, filename)
         with open(logfilepath, 'r') as logfile:
             try:
                 contentlist = logfile.readlines()
             except:
-                contentlist = ["Couln't read the log file."]
-            allcontent["log"+ str(index)] = contentlist
+                contentlist = ["Couln't read the log file: {}".format(logfilepath)]
+            allcontent[filename] = contentlist
     return allcontent
 
 
 
     
 
-def setuplogging():
+def setuplogging(id = 0):
     """ Takes care of setting up the logging. If this method isn't used, 'WARNING' logs will be printed to stdout. 
     """
-    import datetime
-    now  = datetime.datetime.now()
     import pathlib
-    import os.path
     # directory where the logs are collected
     directory = '../logs'
     # create log directory if it doesn't exist
@@ -273,15 +252,7 @@ def setuplogging():
     # logfile  path definition
     # logfilename = "/pase_{}.log".format(now.strftime("%Y-%m-%d_%H-%M-%S"))
     logfilename = "/pase_{}.log"
-    logfilepath = None
-    index = 0
-    while logfilepath is None:
-        logfilepath = directory + logfilename.format(index)
-        if os.path.isfile(logfilepath):
-            logfilepath = None
-            index += 1
-        else:
-            open(logfilepath, "w").close()
+    logfilepath = directory + logfilename.format(id)
 
     # logs will be written to the ^ upper ^ logfile.
     # TODO get logging lvl from configuration
