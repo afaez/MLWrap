@@ -17,12 +17,13 @@ def parse(msg):
     detailsform = """
     <details>
     <summary>{summary}</summary>
+    <ul>
     {data}
+    </ul> 
     </details>
     """
-    
     point = """
-    <p>{text}</p>
+    <li><tt>{text}</tt></li>
     """
 
     content = "<h1>Logs</h1>"
@@ -33,8 +34,17 @@ def parse(msg):
         if isinstance(item, list):
             allpoints = ""
             for listitem in item:
-                allpoints += point.format(text=listitem)
+                text = listitem
+                if "ERROR" in listitem:
+                    text = """<font color="darkred">{data}</font>""".format(data=listitem)
+                elif "INFO" in listitem:
+                    text = """<font color="darkgreen">{data}</font>""".format(data=listitem)
+                else:
+                    text = listitem
+                allpoints += point.format(text=text)
+            
             keydetail = detailsform.format(summary=keyname, data=allpoints)
+
         content += keydetail
     return gethtml().format(content=content)
 

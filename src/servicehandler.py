@@ -181,6 +181,7 @@ def execute_composition(choreo):
         except Exception as ex:
             logging.error(ex, exc_info=True)
             error = traceback.format_exc()
+            break
         
         
         # logging.debug(f"state after op:{variables}")

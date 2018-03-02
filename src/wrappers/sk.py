@@ -3,6 +3,7 @@ from wrappers import wrappercore
 import pase.marshal
 import sklearn.preprocessing
 from pase.pase_dataobject import PASEDataObject
+import logging
 
 def normalize_labeledinstances(wrappedclass_module, kwargs):
     """ Wrapper for method.
@@ -44,7 +45,10 @@ class WrappedClassifier(wrappercore.DelegateFunctionsMixin, wrappercore.BaseClas
         # print(X["instances"].tolist())
         # print(X["labels"])
         # call fit method
-        self.delegate.fit(X["instances"], X["labels"])
+        if isinstance(X, dict):
+            self.delegate.fit(X["instances"], X["labels"])
+        else:
+            raise Exception("Fit invocation on:\n" + str(X))
 
     def predict(self, X):
         """ X is instances object for example: [[1.0,2.0,3.0],[4.0,5.0,6.0]]
@@ -125,7 +129,7 @@ class SkPPWrapper(wrappercore.DelegateFunctionsMixin, wrappercore.BaseOptionsSet
         """ X is labeledinstances object.
         """ 
         # call fit method with instances only
-        self.delegate.fit(X["instances"]) 
+        self.delegate.fit(X["instances"], X["labels"]) 
         self.trained = True
 
     def transform(self, X):

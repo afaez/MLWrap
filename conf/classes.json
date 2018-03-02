@@ -2,6 +2,7 @@
     "plainlib.package1.b.B" : {
         "wrapper":"wrappers.bWrap.BWrap"
     },
+
     "plainlib.package1.b.B.random": {
         "classname": "plainlib.package1.b.B"
     },
@@ -9,92 +10,101 @@
     "$base_sk_classifier_config$":{
         "wrapper" : "wrappers.sk.WrappedClassifier"
     },
-    "sklearn.ensemble.AdaBoostClassifier" : {
+    
+    "$basic_sk_classifier_config$":{
         "extends" : ["$base_sk_classifier_config$"]
+    },
+    "$ensemble_sk_classifier_config$":{
+        "extends" : ["$base_sk_classifier_config$"]
+    },
+    "$meta_sk_classifier_config$":{
+        "extends" : ["$base_sk_classifier_config$"]
+    },
+
+    "sklearn.ensemble.AdaBoostClassifier" : {
+        "extends" : ["$meta_sk_classifier_config$"]
     },
     "sklearn.ensemble.BaggingClassifier" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$meta_sk_classifier_config$"]
     },
+
     "sklearn.mixture.BayesianGaussianMixture" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.naive_bayes.BernoulliNB" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.tree.ExtraTreeClassifier" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.ensemble.ExtraTreesClassifier" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$ensemble_sk_classifier_config$"]
     },
     "sklearn.naive_bayes.GaussianNB" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.gaussian_process.GaussianProcessClassifier" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.ensemble.GradientBoostingClassifier" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$ensemble_sk_classifier_config$"]
     },
     "sklearn.neighbors.KNeighborsClassifier" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.neighbors.LSHForest" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.discriminant_analysis.LinearDiscriminantAnalysis" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.svm.LinearSVC" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.linear_model.LogisticRegression" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.linear_model.LogisticRegressionCV" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.naive_bayes.MultinomialNB" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.neighbors.NearestNeighbors" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.svm.NuSVC" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.linear_model.PassiveAggressiveClassifier" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.neighbors.RadiusNeighborsClassifier" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.ensemble.RandomForestClassifier" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$ensemble_sk_classifier_config$"]
     },
     "sklearn.linear_model.RidgeClassifier" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.linear_model.RidgeClassifierCV" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.linear_model.SGDClassifier" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.svm.SVC" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.neural_network.MLPClassifier" : {
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.tree.DecisionTreeClassifier":{
-        "extends" : ["$base_sk_classifier_config$"]
-    },
-    "sklearn.ensemble.RandomForestClassifier":{
-        "extends" : ["$base_sk_classifier_config$"]
+        "extends" : ["$basic_sk_classifier_config$"]
     },
 
 
@@ -151,7 +161,7 @@
         "extends" : ["$base_sk_pp_config$"]
     },
 
-
+    
     "sklearn.kernel_approximation.AdditiveChi2Sampler":{
         "extends" : ["$base_sk_pp_config$"]
     },
