@@ -15,6 +15,9 @@ echo 'Running service... '
 if [ "$1" = "" ]; then # No port was specified.
   set -- "5000"
 fi
+# Delete logs
+rm -rf logs
+
 # Run service using gunicorn:
 cd "src"
 gunicorn --bind 0.0.0.0:$1 server --workers=10 --timeout 1600 --keep-alive 10 --log-level debug

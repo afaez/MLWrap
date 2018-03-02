@@ -15,6 +15,7 @@ import logging
 import re # regular expression used in bodystring_to_bodydict()
 import traceback # for logging stacktraces in compsition execution method
 import compositionclient
+import traceback
 
 def create(class_path, body):
     # Check if requested class is in the configuration whitelist.
@@ -147,6 +148,7 @@ def execute_composition(choreo):
         # print(f"executing op\"{operation}\" at index={operatingindex} with inputs={str(operation.args)[0:100]}")
         logging.debug(f"executing op\"{operation}\" at index={operatingindex}") # with inputs={operation.args}")
 
+        error = None
         instance = None
         # execute rightside function
         try:
@@ -178,6 +180,8 @@ def execute_composition(choreo):
             logging.debug(f"success operation index={operatingindex}")
         except Exception as ex:
             logging.error(ex, exc_info=True)
+            error = traceback.format_exc()
+        
         
         # logging.debug(f"state after op:{variables}")
 
@@ -191,6 +195,10 @@ def execute_composition(choreo):
         if not handle.is_remote():
             logging.debug(f"Writing {handle} to disk.")
             store.save(handle.classpath, handle.service, handle.id)
+
+    if error is not None:
+        returnbody = {"error": error}
+        return returnbody
 
     return_variables = {}
 
@@ -206,7 +214,7 @@ def execute_composition(choreo):
 
 
     # print("Returning : " + str(returnbody)[0:3000])
-    return json.dumps(returnbody)
+    return returnbody
 
 def getlogs(logrange):
     import os.path
@@ -239,7 +247,10 @@ def getlogs(logrange):
     for index in range(min_index, highest_index):
         logfilepath = directory + logfilename.format(index)
         with open(logfilepath, 'r') as logfile:
-            contentlist = logfile.readlines()
+            try:
+                contentlist = logfile.readlines()
+            except:
+                contentlist = ["Couln't read the log file."]
             allcontent["log"+ str(index)] = contentlist
     return allcontent
 
@@ -268,6 +279,8 @@ def setuplogging():
         if os.path.isfile(logfilepath):
             logfilepath = None
             index += 1
+        else:
+            open(logfilepath, "w").close()
 
     # logs will be written to the ^ upper ^ logfile.
     # TODO get logging lvl from configuration

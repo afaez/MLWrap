@@ -33,7 +33,7 @@ def parse(msg):
         if isinstance(item, list):
             allpoints = ""
             for listitem in item:
-                allpoints += point.format(listitem)
+                allpoints += point.format(text=listitem)
             keydetail = detailsform.format(summary=keyname, data=allpoints)
         content += keydetail
     return gethtml().format(content=content)

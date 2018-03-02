@@ -6,14 +6,17 @@ import os
 import re
 
 
-def write_into_box(msg, fp):
+def write_into_box(msg, fp, boxchar = '-', padchar = ' ', paddingrepeat = 2):
+
     def repeat_to_length(string_to_expand, length):
         return (string_to_expand * (int(length/len(string_to_expand))+1))[:length]
-    comment = "### {msg} ###".format(msg=msg)
-    wrapcomment = repeat_to_length("#",len(comment))
-    print("\n\n"+wrapcomment,file=fp)
-    print(comment,file=fp)
-    print(wrapcomment+"\n",file=fp)
+
+    paddingrepeat = repeat_to_length(padchar, paddingrepeat)
+    comment = paddingrepeat + " {msg} ".format(msg=msg) + paddingrepeat
+    wrapcomment = repeat_to_length(boxchar,len(comment))
+    print("\n\n#"+wrapcomment +"#",file=fp)
+    print("#" + comment + "#",file=fp)
+    print("#" + wrapcomment+"#\n",file=fp)
 
 def getjavaSource_OptionsPredicate():
     return """package de.upb.crc901.mlplan.evaluablepredicates.mlplan.{package1}.{package2}.{classname};
@@ -89,8 +92,8 @@ def getjavaSource_BoolOption():
     }}
     """
 
-def write_skript(scriptname = "script.txt", package1 = "classifier", package2 = "basic"):
-    script = open("script.txt",mode="w")
+def write_skript(predicatefilename = "predicates.txt", scriptname = "script.txt", package1 = "classifier", package2 = "basic", configsupertype = "basic_sk_classifier_config"):
+    script = open(scriptname,mode="w")
     classpath = "sklearn.ensemble.RandomForestClassifier"
     javasrc = "../../mlplan/"
     dirsrc = javasrc + "{package1}/{package2}/{classname}/"
@@ -98,7 +101,7 @@ def write_skript(scriptname = "script.txt", package1 = "classifier", package2 = 
 
     allPredicates = {}
 
-    for classpath in pase.config.lookup.allsubtypes("$base_sk_classifier_config$"):
+    for classpath in pase.config.lookup.allsubtypes(configsupertype):
         pckgSplit = classpath.split(".")
         clazz = traverse_package(pckgSplit)
         obj = clazz()
@@ -128,7 +131,7 @@ def write_skript(scriptname = "script.txt", package1 = "classifier", package2 = 
 
 
 
-        firstLine = "sl_{classname};\t\t\tslCreateBaseClassifier(c); c,p; ; ; de.upb.crc901.services.mlpipeline.MLPipelinePlan:setClassifier(c,'{classpath}',p)".format(classname=classname, classpath=classpath)
+        firstLine = "sl_{classname};\t\t\tslCreate_{package1}_{package2}(c); c,p; ; ; de.upb.crc901.mlplan.services.MLPipelinePlan:setClassifier(c,'{classpath}',p)".format(classname=classname, classpath=classpath, package1=package1, package2=package2)
 
         lines = []
         predicates = []
@@ -137,7 +140,7 @@ def write_skript(scriptname = "script.txt", package1 = "classifier", package2 = 
 
             if isinstance(params[methodname], None.__class__):
                 continue
-
+            # generate grammar
             # create option line
             lineName = "sl-{classname}-set-{methodname}".format(classname=classname,methodname=methodname)
 
@@ -147,7 +150,7 @@ def write_skript(scriptname = "script.txt", package1 = "classifier", package2 = 
 
             lines.append(optionLine)
 
-            optionLine = "{linename};\t\t{linename}(c,p); c,p,t; ; {javaclass}(t); de.upb.crc901.services.mlpipeline.MLPipelinePlan:addOptions(c,p,'-{methodname}', t)".format(linename=lineName, javaclass=javaClassName, methodname=methodname)
+            optionLine = "{linename};\t\t{linename}(c,p); c,p,t; ; {javaclass}(t); de.upb.crc901.mlplan.services.MLPipelinePlan:addOptions(c,p,'-{methodname}', t)".format(linename=lineName, javaclass=javaClassName, methodname=methodname)
 
             # append option line to the list and add -> to the first line
             lines.append(optionLine)
@@ -193,18 +196,18 @@ def write_skript(scriptname = "script.txt", package1 = "classifier", package2 = 
             print(source, file=javafile)
             javafile.close()
 
-        
+        # Write grammar 
         write_into_box(classname, script)
         print(firstLine,file=script)
-        comment = "\n### Options Predicates for {classname} ###\n".format(classname=classname)
-        print(comment,file=script)
+
+        write_into_box("Option Configuration for {classname}".format(classname=classname), script, boxchar='-', paddingrepeat= 4)
         for optionLine in lines:
             print(optionLine,file=script)
 
 
     script.close()
 
-    predicates = open("predicates.txt",mode="w+")
+    predicates = open(predicatefilename, mode="w")
     for classname in allPredicates:
 
 
@@ -218,5 +221,9 @@ def write_skript(scriptname = "script.txt", package1 = "classifier", package2 = 
 
 
 
-if __name__ == "__main__":
-    write_skript()
+if __name__ == "__main__": 
+    # for classpath in pase.config.lookup.allsubtypes("$basic_sk_classifier_config$"):
+    #     print(classpath)
+    write_skript("predicate_basic.txt" ,"sl_basic_cl.methods", "classifier", "basic", "$basic_sk_classifier_config$")
+    write_skript("predicate_ensemble.txt" ,"sl_ensemble_cl.methods", "classifier", "ensemble", "$ensemble_sk_classifier_config$")
+    write_skript("predicate_meta.txt" ,"sl_meta_cl.methods", "classifier", "meta", "$meta_sk_classifier_config$")

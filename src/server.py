@@ -70,7 +70,11 @@ def composition_request():
     body = parse_jsonbody()
     choreo = composition.Choreography.fromdict(body)
 
-    return servicehandler.execute_composition(choreo)
+    returnbody = servicehandler.execute_composition(choreo)
+    if "error" in returnbody:
+        return returnbody["error"], 400
+    else:
+        return json.dumps(returnbody)
 
 def create_body(variables):
     """ Creates the return body of the given variabeles
