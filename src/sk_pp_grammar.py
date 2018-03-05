@@ -92,16 +92,22 @@ def getjavaSource_BoolOption():
     }}
     """
 
-def write_skript(predicatefilename = "predicates.txt", scriptname = "script.txt", package1 = "classifier", package2 = "basic", configsupertype = "basic_sk_classifier_config"):
-    script = open(scriptname,mode="w")
+def write_skript(predicatefilename = "predicates.txt", scriptname = "script.txt", package1 = "pp", package2 = "as", configsupertype = "$base_sk_pp_config$"):
     classpath = "sklearn.ensemble.RandomForestClassifier"
-    javasrc = "../../mlplan/"
+    genfolder = "../../_gen/"
+    predicatefilename = genfolder + predicatefilename
+    scriptname = genfolder + scriptname
+    javasrc = "../../_gen/mlplan/"
     dirsrc = javasrc + "{package1}/{package2}/{classname}/"
     filesrc = "{javaClassName}.java"
 
+    script = open(scriptname,mode="w")
     allPredicates = {}
-
+    dic = {}
+    import sys
+    write_into_box("PP Classes", fp = sys.stdout)
     for classpath in pase.config.lookup.allsubtypes(configsupertype):
+        print(classpath+ ":String")
         pckgSplit = classpath.split(".")
         clazz = traverse_package(pckgSplit)
         obj = clazz()
@@ -110,15 +116,18 @@ def write_skript(predicatefilename = "predicates.txt", scriptname = "script.txt"
 
         alldocs = obj.__doc__.split("----------")
         i = 1
-        while not alldocs[i-1].strip().endswith("Parameters"):
+        while (i -1) < len(alldocs) and (not alldocs[i-1].strip().endswith("Parameters")):
             i += 1
-        paradocs = alldocs[i]
+        if i >= len(alldocs):
+            # print("coultn't get doc from " + classpath)
+            paradocs =""
+        else:
+            #print("doc from " + classpath + "\n " + alldocs[i])
+            paradocs = alldocs[i]
 
         optiondocs = {}
-
-
-
         for methodname in params.keys():
+            dic[methodname] = None
             startpos = paradocs.find("    " + methodname)
             endpos = len(paradocs)
             for othermethod in params.keys():
@@ -131,8 +140,11 @@ def write_skript(predicatefilename = "predicates.txt", scriptname = "script.txt"
 
 
 
-        firstLine = "sl_{classname};\t\t\tslCreate_{package1}_{package2}(c); c,p; ; ; de.upb.crc901.mlplan.services.MLPipelinePlan:setClassifier(c,'{classpath}',p)".format(classname=classname, classpath=classpath, package1=package1, package2=package2)
+        planLine = "sl_{classname};\t\t\tslChoose_{package1}_{package2}(config); config; ; ; associateWithAssertion('{classpath}',config)".format(classname=classname, classpath=classpath, package1=package1, package2=package2)
+        # wekaBF;	wekaChooseSubsetSearcher(config); config; ; ; associateWithAssertion('weka.attributeSelection.BestFirst',config)
 
+        firstLine = "sl_{classname};\t\t\tslConfigure_{package1}_{package2}(config); config,pipe; associated('{classpath}',config); ; de.upb.crc901.mlplan.services.MLPipelinePlan:addAttributeSelection(config,'{classpath}',pipe)".format(classname=classname, classpath=classpath, package1=package1, package2=package2)
+        #wekaBF;	configureWekaSearcher(config, fs); config,fs,oList,oArray; associated('weka.attributeSelection.BestFirst',config) ; ; 
         lines = []
         predicates = []
         allPredicates[classname] = predicates
@@ -154,7 +166,7 @@ def write_skript(predicatefilename = "predicates.txt", scriptname = "script.txt"
 
             # append option line to the list and add -> to the first line
             lines.append(optionLine)
-            firstLine += "\t->\t{lineName}(c,p)".format(lineName=lineName)
+            firstLine += "\t->\t{lineName}(config,pipe)".format(lineName=lineName)
 
 
             # add predicates
@@ -175,6 +187,7 @@ def write_skript(predicatefilename = "predicates.txt", scriptname = "script.txt"
                 needsBool = True
             elif isinstance(type_, int):
                 needsInt = "true"
+
 
             # calculate docstring:
             optionsdoc = optiondocs[methodname]
@@ -198,6 +211,7 @@ def write_skript(predicatefilename = "predicates.txt", scriptname = "script.txt"
 
         # Write grammar 
         write_into_box(classname, script)
+        print(planLine, file=script)
         print(firstLine,file=script)
 
         write_into_box("Option Configuration for {classname}".format(classname=classname), script, boxchar='-', paddingrepeat= 4)
@@ -218,26 +232,13 @@ def write_skript(predicatefilename = "predicates.txt", scriptname = "script.txt"
 
     predicates.close()
 
+    write_into_box("options for pp", fp = sys.stdout)
+    for o in dic:
+        print("-"+o+ ":String")
+
 
 
 
 if __name__ == "__main__": 
-    for classpath in pase.config.lookup.allsubtypes("$base_sk_pp_config$"):
-        pckgSplit = classpath.split(".")
-        clazz = traverse_package(pckgSplit)
-        obj = clazz()
-        params = obj.get_params()
-        classname = pckgSplit[-1]
-
-        alldocs = obj.__doc__.split("----------")
-        i = 1
-        while (i -1) < len(alldocs) and (not alldocs[i-1].strip().endswith("Parameters")):
-            i += 1
-        if i >= len(alldocs):
-            # print("coultn't get doc from " + classpath)
-            paradocs =""
-        else:
-            #print("doc from " + classpath + "\n " + alldocs[i])
-            paradocs = alldocs[i]
-
-        optiondocs = {}
+    write_skript()
+    

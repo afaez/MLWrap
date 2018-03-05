@@ -56,9 +56,9 @@ def forwardoperation(state, currentindex, choreography):
             
     logging.debug(f"forwarding to {hostname} with inputs fieldnames {[fieldname for fieldname in forwardedinputs]}")
 
-    payload = to_bodystring(currentindex, maxindex, forwardedinputs, choreography.originalstring)
+    payload = to_bodystring(currentindex, maxindex, forwardedinputs, choreography.originalstring, choreography.requestid)
     url = "http://" + hostname + "/choreography"
-    responsestring = requests.request("POST", url, data=payload, headers={}).text
+    responsestring = requests.request("POST", url, data=payload, headers={}, timeout=2).text
     # logging.debug(f"Received a return from a forwarded call: {responsestring}")
     try:
         responsedict = json.loads(responsestring)
@@ -90,19 +90,10 @@ def forwardoperation(state, currentindex, choreography):
     # now return to servicehandler to execute the rest
 
 
-def to_bodystring(currentindex, maxindex, inputs, coreographystring):
-    requestbody = Choreography.todict(composition = coreographystring, currentindex=currentindex, maxindex=maxindex, variables = inputs)
+def to_bodystring(currentindex, maxindex, inputs, coreographystring, requestid):
+    requestbody = Choreography.todict(composition = coreographystring, currentindex=currentindex, maxindex=maxindex, variables = inputs, requestid = requestid)
 
     # logging.debug("Sending body: " + str(requestbody))
     returnstring = json.dumps(requestbody)
-    #f"currentindex={currentindex}&maxindex={maxindex}&coreography={coreographystring}"
-    # for var in inputs:
-    #     if var == "$arglist$":
-    #         continue # don't parse arglist.
-    #     try:
-    #         stringencoded = pase.marshal.marshaldict(inputs[var])
-    #         returnstring += f"&inputs[{var}]={stringencoded}"
-    #     except Exception as ex:
-    #         logging.error("Error when parsing state in composition client: " + ex)
     return returnstring
 

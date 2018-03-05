@@ -1,6 +1,9 @@
 
 from flask import Flask
 from flask import request
+from flask import Response
+from multiprocessing import Process, Manager
+import time
 application = Flask(__name__)
 from werkzeug.serving import WSGIRequestHandler
 WSGIRequestHandler.protocol_version = "HTTP/1.1"
@@ -12,13 +15,13 @@ def catch_all(path):
     # print("PATH: ", path)
     print("---> Headers: \n", request.headers)
     # body = request.get_json(force = True, silent = True) 
-    # print("---> Body: \n", body)
     data = bytearray()
-    chunk_size = 4096
+    chunk_size = 1
     # stream = request.environ['input']
     while True:
         chunk = request.stream.read(chunk_size)
-        print("read stream : {}".format(len(chunk)))
+        print("read chunksize : {}".format(len(chunk)))
+        print("chunk content: {}".format(chunk))
         if len(chunk) == 0:
             break
         else :
@@ -27,9 +30,41 @@ def catch_all(path):
 
     print("---> Sream length: \n", len(data)) 
     decodeddata = data.decode()
-    # print("---> Sream: \n", decodeddata)
+    print("---> Sream content: \n", decodeddata)
 
-    return "success"
+    # start worker:
+    manager = Manager()
+    out_dict = manager.dict()
+    out_dict["result"] = None # shared container that will hold the result:
+    p = Process(target = worker_function, args = (out_dict, ))
+    p.start()
+
+
+    def generate_result():
+        time.sleep(0.01) # sleep 10 milliseconds to yield process and allow the worker to generate the result
+        while out_dict["result"] is None: # poll every 100 millisecond if the result are generated?
+            try:
+                yield "" # try to send back nothing
+                print("Connection alive.")
+            except:
+                print("Connection dead. terminating..")
+                p.terminate()
+                print("terminated.")
+                return 
+            time.sleep(0.1) 
+
+        print("Process finished, returning result")
+        yield out_dict["result"]
+        print("finished returning result")
+
+    return Response(generate_result()) 
+
+
+def worker_function(out):
+    time.sleep(4) # sleep 4 seconds
+    out["result"] = "done"
+
+
 
 if __name__ == '__main__':
-    application.run("000.000.000.000", port = 5000, debug = True)
+    application.run("localhost", port = 5000, debug = True)

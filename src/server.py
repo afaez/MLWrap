@@ -11,7 +11,10 @@ import pase.constants.error_msg as error
 import jsonpickle.ext.numpy as jsonpickle_numpy
 import servicehandler
 import logging
+import os
+import requests
 
+PID = os.getpid()
 
 # register handlers for jacksonpickle to be used with numpy.
 jsonpickle_numpy.register_handlers()
@@ -66,12 +69,21 @@ def composition_request():
     # Parse body to json. json_content is true, if content-type is set to 'application/json'.
     body = parse_jsonbody()
     choreo = composition.Choreography.fromdict(body)
+    notifyObserver(choreo.requestid)
+    
 
     returnbody = servicehandler.execute_composition(choreo)
     if "error" in returnbody:
         return returnbody["error"], 400
     else:
         return json.dumps(returnbody)
+
+def notifyObserver(requestid):
+    message = "Python_Worker_Started:" + str(requestid) + "_" + str(PID)
+    observerhost = "localhost:9090"
+    url = "http://" + observerhost + "/"
+    requests.request("POST", url, data=message, headers={}, timeout= 2)
+    
 
 def create_body(variables):
     """ Creates the return body of the given variabeles
@@ -144,9 +156,8 @@ if __name__ == '__main__':
 
 if __name__ == 'server':
 
-    import os
     #setup logging.
-    servicehandler.setuplogging(id = os.getpid())
+    servicehandler.setuplogging()
     try:
         import sys
         print()

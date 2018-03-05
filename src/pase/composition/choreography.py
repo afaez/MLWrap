@@ -23,6 +23,7 @@ class Choreography:
         self.input_dict = input_dict
         self.currentindex = 0
         self.maxindex = len(operation_list)
+        self.requestid = None
 
 
     def __iter__(self):
@@ -35,7 +36,7 @@ class Choreography:
         return f"ops:{self.operation_list}\nreturns:{self.return_list}\nstores:{self.store_list}"
 
     @classmethod
-    def todict(cls, composition=None, maxindex = -1, currentindex=-1, variables = {}):
+    def todict(cls, composition=None, maxindex = -1, currentindex=-1, variables = {}, requestid = "null"):
         """ Creates a dictionary object from this choreography
         """
         d = dict()
@@ -45,6 +46,7 @@ class Choreography:
             d["maxindex"] = maxindex
         if currentindex >= 0:
             d["currentindex"] = currentindex
+        d["requestid"] = requestid
 
         if isinstance(variables, dict):
             regex = "^i(\d+)$"
@@ -187,6 +189,8 @@ class Choreography:
             choreo.currentindex = int(dictionary["currentindex"])
         if "maxindex" in dictionary:
             choreo.maxindex = int(dictionary["maxindex"])
+        if "requestid" in dictionary:
+            choreo.requestid = str(dictionary["requestid"])
 
         return choreo
         # Returns structure containing all operations and inputs and so on.
