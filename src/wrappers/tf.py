@@ -47,7 +47,7 @@ class WrappedNeuralNet(wrappercore.BaseClassifierMixin, wrappercore.BaseOptionsS
     """
     model_values = None
     layer_count = 2
-    epochs = 1000
+    epochs = 100
     learning_rate = 0.3
     batch_size = 900
     def __init__(self, wrappedclass_module, kwargs):

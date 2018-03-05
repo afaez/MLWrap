@@ -146,9 +146,8 @@ if __name__ == '__main__':
     except:
         pass
 
-    import os
     #setup logging.
-    servicehandler.setuplogging(id = os.getpid())
+    servicehandler.setuplogging(PID)
 
     # Run the server
     import pase.config
@@ -157,7 +156,7 @@ if __name__ == '__main__':
 if __name__ == 'server':
 
     #setup logging.
-    servicehandler.setuplogging()
+    servicehandler.setuplogging(PID)
     try:
         import sys
         print()

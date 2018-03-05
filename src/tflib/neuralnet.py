@@ -137,9 +137,9 @@ class NeuralNet:
                                 feed_dict={ self.x: arffstruct.input_matrix[batch_start:batch_end],
                                             self.y: arffstruct.output_matrix[batch_start:batch_end]})
                     avg_cost += c / total_set_size
-                self.log(f"Epoch {epoch+1}: cost = {avg_cost:.3f}")
+                #self.log(f"Epoch {epoch+1}: cost = {avg_cost:.3f}")
             accuracy_result =sess.run(accuracy, feed_dict={self.x : arffstruct.input_matrix, self.y: arffstruct.output_matrix})
-            self.log(f"accuracy:{accuracy_result}")
+            self.log(f"finished training: accuracy:{accuracy_result}")
 
             # save the model
             weights_biases_values = []
