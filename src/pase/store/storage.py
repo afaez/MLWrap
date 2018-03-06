@@ -96,7 +96,7 @@ def restore_state(class_name, id):
     jsonstring = pickle.load(file_)
     file_.close()
     endtime = time.time()
-    logging.debug("Stored object of class {} in {:9.3f} seconds.".format(class_name, (endtime - starttime)))
+    logging.debug("Restored object of class {} in {:9.3f} seconds.".format(class_name, (endtime - starttime)))
     return jsonstring
 
 def readfile(path):
