@@ -16,6 +16,8 @@ import re # regular expression used in bodystring_to_bodydict()
 import traceback # for logging stacktraces in compsition execution method
 import compositionclient
 import traceback
+import time
+
 
 def create(class_path, body):
     # Check if requested class is in the configuration whitelist.
@@ -48,6 +50,7 @@ def create(class_path, body):
 def copy_instance(class_path, id):
     # Copies this instance into another instance and returns the new id.
     try:
+    starttime = time.time()
         # Recover the instance from the memory:
         instance = store.restore(class_path, id)
     except ValueError as ve:
@@ -147,7 +150,7 @@ def execute_composition(choreo):
                 pass
         # print(f"executing op\"{operation}\" at index={operatingindex} with inputs={str(operation.args)[0:100]}")
         logging.debug(f"executing op\"{operation}\" at index={operatingindex}") # with inputs={operation.args}")
-
+        starttime = time.time()
         error = None
         instance = None
         # execute rightside function
@@ -176,8 +179,9 @@ def execute_composition(choreo):
                 # forward
                 # If the class that has to be constructed isn't known/allowed by this server, call the next service:
                 compositionclient.forwardoperation(variables, operatingindex, choreo)
+            endtime = time.time()
 
-            logging.debug(f"success operation index={operatingindex}")
+            logging.debug("Operation execution done in {:9.3f} seconds.".format(endtime - starttime))
         except Exception as ex:
             logging.error(ex, exc_info=True)
             error = traceback.format_exc()
@@ -194,7 +198,6 @@ def execute_composition(choreo):
         if not isinstance(handle, ServiceHandle):
             continue
         if not handle.is_remote():
-            logging.debug(f"Writing {handle} to disk.")
             store.save(handle.classpath, handle.service, handle.id)
 
     if error is not None:
