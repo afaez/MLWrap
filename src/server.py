@@ -13,8 +13,13 @@ import servicehandler
 import logging
 import os
 import requests
+import resource
 
 PID = os.getpid()
+
+softLimit= 1024*1024*1024
+hardLimit= 1536*1024*1024
+resource.setrlimit(resource.RLIMIT_AS, (softLimit, hardLimit))
 
 # register handlers for jacksonpickle to be used with numpy.
 jsonpickle_numpy.register_handlers()
