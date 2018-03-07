@@ -50,7 +50,6 @@ def create(class_path, body):
 def copy_instance(class_path, id):
     # Copies this instance into another instance and returns the new id.
     try:
-    starttime = time.time()
         # Recover the instance from the memory:
         instance = store.restore(class_path, id)
     except ValueError as ve:
