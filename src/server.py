@@ -12,6 +12,7 @@ import jsonpickle.ext.numpy as jsonpickle_numpy
 import servicehandler
 import logging
 import os
+import re
 import requests
 import resource
 
@@ -148,7 +149,7 @@ if __name__ == '__main__':
     try:
         import sys
         port_ = int(sys.argv[1]) # port is the first command line argument.
-    except:
+    except Exception:
         pass
 
     #setup logging.
@@ -162,8 +163,3 @@ if __name__ == 'server':
 
     #setup logging.
     servicehandler.setuplogging(PID)
-    try:
-        import sys
-        print()
-    except:
-        pass

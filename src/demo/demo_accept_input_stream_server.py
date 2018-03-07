@@ -46,6 +46,10 @@ def catch_all(path):
             try:
                 yield "" # try to send back nothing
                 print("Connection alive.")
+            
+            except (KeyboardInterrupt, SystemExit):
+                p.terminate()
+                raise
             except:
                 print("Connection dead. terminating..")
                 p.terminate()

@@ -235,6 +235,8 @@ def getlogs():
         with open(logfilepath, 'r') as logfile:
             try:
                 contentlist = logfile.readlines()
+            except (KeyboardInterrupt, SystemExit):
+                raise
             except:
                 contentlist = ["Couln't read the log file: {}".format(logfilepath)]
             allcontent[filename] = contentlist
