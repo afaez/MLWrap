@@ -262,7 +262,7 @@ def setuplogging(id = 0):
     # TODO get logging lvl from configuration
 
     logging.basicConfig(
-                    level=logging.DEBUG,
+                    level=logging.INFO,
                     format='%(asctime)s %(levelname)-8s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S',
                     filename=logfilepath,

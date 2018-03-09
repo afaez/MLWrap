@@ -88,9 +88,12 @@ def notifyObserver(requestid):
     message = "Python_Worker_Started:" + str(requestid) + "_" + str(PID)
     observerhost = "localhost:9090"
     url = "http://" + observerhost + "/"
-    requests.request("POST", url, data=message, headers={}, timeout= 2)
-    
+    try:
+        requests.request("POST", url, data=message, headers={}, timeout= 2)
+    except Exception:
+        pass
 
+    
 def create_body(variables):
     """ Creates the return body of the given variabeles
     """

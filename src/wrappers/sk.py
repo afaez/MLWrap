@@ -37,6 +37,7 @@ class WrappedClassifier(wrappercore.DelegateFunctionsMixin, wrappercore.BaseClas
     def train(self, X):
         """ Redirects to fit.
         """
+        #logging.debug("----> Start training with:"  + str(X))
         self.fit(X)
 
     def fit(self, X):
@@ -54,6 +55,7 @@ class WrappedClassifier(wrappercore.DelegateFunctionsMixin, wrappercore.BaseClas
         """ X is instances object for example: [[1.0,2.0,3.0],[4.0,5.0,6.0]]
         X may also be a dictionary object of labeledinstances. (Used when testing with labeledinstances)
         """
+        #logging.debug("----> Start predicting with:"  +  str(X))
         if(isinstance(X, dict)):
             X = X["instances"]
         prediction = self.delegate.predict(X)
@@ -63,62 +65,10 @@ class WrappedClassifier(wrappercore.DelegateFunctionsMixin, wrappercore.BaseClas
 
 
 
-# Delegates other classes
-class WrappedNumClassifier(wrappercore.DelegateFunctionsMixin, wrappercore.BaseClassifierMixin):
-    """ Wraps a predictor to Work like a classifier.
-    fit has the new signature:  fit(LabeledInstances)::void
-    predict has the new signature: fit(Instances)::LabeledInstances
-    """
-    # Maps labels to numerical values
-    labelslist = []
-    def __init__(self, wrappedclass_module, kwargs):
-        wrappedinstance  = wrappedclass_module() 
-        # initialize the DelegateFunctionsMixin with the created wrapped object.
-        wrappercore.DelegateFunctionsMixin.__init__(self, delegate=wrappedinstance)
-
-    def train(self, X):
-        return self.fit(X)
-
-    def fit(self, X):
-        # X is now a labeledinstances object for example: {"instances":[[1.0,2.0],[3.0,4.0]],"labels":["A","B"]}
-        # extend the labelsmapping
-        y_data = []
-        for label in X["labels"]:
-            if label not in self.labelslist:
-                self.labelslist.append(label)# first label found is mapped to 0, second to 1, etc..
-            # create y_data of numerical values: [0,2,1,3,0 .. ]
-            y_data.append(self.labelslist.index(label))
-        # now call fit method
-        self.delegate.fit(X["instances"].tolist(), y_data)
-
-    def predict(self, X):
-        # X is now instances object for example: [[1.0,2.0,3.0],[4.0,5.0,6.0]]
-        # First predict to numerical values
-        if(isinstance(X, dict)):
-            X = X["instances"]
-        prediction = self.delegate.predict(X)
-        labeledprediction = []
-        # now map back to labels
-        for index in range(len(prediction)):
-            rounded_outcome = int(round(prediction[index])) # round(0.5) => 0 ; round(0.51) => 1
-            if(rounded_outcome>=0 and rounded_outcome<len(self.labelslist)):
-                # in bound of mapping
-                labeled_outcome = self.labelslist[rounded_outcome]
-            # else project to the boundaries
-            elif rounded_outcome<0:
-                labeled_outcome = self.labelslist[0] # first label
-            else:
-                labeled_outcome = self.labelslist[-1] # last label
-            labeledprediction.append(labeled_outcome)
-        
-        dataobject = PASEDataObject("StringList", labeledprediction)
-        return labeledprediction
-
 
 class SkPPWrapper(wrappercore.DelegateFunctionsMixin, wrappercore.BaseOptionsSetterMixin):
     """ Wraps the feature selection classes in scikit.
     """
-    trained = False
     def __init__(self, wrappedclass_module, kwargs):
         wrappedinstance  = wrappedclass_module() 
         # initialize the DelegateFunctionsMixin with the created wrapped object.
@@ -130,7 +80,6 @@ class SkPPWrapper(wrappercore.DelegateFunctionsMixin, wrappercore.BaseOptionsSet
         """ 
         # call fit method with instances only
         self.delegate.fit(X["instances"], X["labels"]) 
-        self.trained = True
 
     def transform(self, X):
         output = self.delegate.transform(X["instances"])
@@ -139,11 +88,10 @@ class SkPPWrapper(wrappercore.DelegateFunctionsMixin, wrappercore.BaseOptionsSet
         dataobject = PASEDataObject("LabeledInstances", X_copy)
         return dataobject
 
+    def train(self, X):
+        self.fit(X)
 
     def preprocess(self, X):
-        if not self.trained:
-            self.fit(X)
-
         return self.transform(X)
 
 class ImputerWrapper(wrappercore.DelegateFunctionsMixin, wrappercore.BaseOptionsSetterMixin):

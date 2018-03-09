@@ -58,9 +58,9 @@ def save(class_name, instance, id = None):
     # Finish the path.
     path = _tofilepath(class_name, id)
     # file pointer
-    # w+ overwrites the existing file if the file exists. If the file does not exist, creates a new file for reading and writing.
+    # w overwrites the existing file if the file exists. If the file does not exist, creates a new file for reading and writing.
     starttime = time.time()
-    file_ = open(path, "wb+") 
+    file_ = open(path, "wb") 
 
     # Serialize the object:
     # jsonstring = jsonpickle.encode(instance)
