@@ -2,6 +2,7 @@
 """
 import json
 import logging
+from json.decoder import JSONDecodeError
 ATTRIBUTE_BLACKLIST = ["__getstate__", "__setstate__"]
 class DelegateFunctionsMixin(object):
     """ Delegate accesses to a delegate.
@@ -54,7 +55,10 @@ class BaseOptionsSetterMixin(object):
                 # options contains field and value, like: -a 1
                 splits = option.split(" ", 2)
                 field = splits[0][1:] # use[1:] to cut off the '-'
-                value = json.loads(splits[1])
+                try:
+                    value = json.loads(splits[1])
+                except JSONDecodeError:
+                    value = splits[1]
 
                 self.setOption(field,value)
                 
@@ -67,7 +71,7 @@ class BaseOptionsSetterMixin(object):
         """
         if hasattr(self, "get_params") and hasattr(self, "set_params"):
             if field in self.get_params().keys():
-                logging.debug("Setting field={} to value={}".format(field,value))
+                #logging.debug("Setting field={} to value={}".format(field,value))
                 self.set_params(**{field:value})
         # else:
         #     self.__dict__[field] =  value

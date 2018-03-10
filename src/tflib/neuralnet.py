@@ -138,7 +138,7 @@ class NeuralNet:
                                 feed_dict={ self.x: arffstruct.input_matrix[batch_start:batch_end],
                                             self.y: arffstruct.output_matrix[batch_start:batch_end]})
                     avg_cost += c / total_set_size
-                total_avg_cost += avg_cost/epoch
+                total_avg_cost += avg_cost/epochs
 
 
             self.log(f"Total average cost = {total_avg_cost:.3f}")

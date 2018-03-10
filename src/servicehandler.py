@@ -170,7 +170,7 @@ def execute_composition(choreo):
                 if  "__construct" != operation.func:
                     path_list.append(operation.func)
                 instance, classpath = reflect.construct(path_list, operation.args)
-                service_id = store.save(classpath, instance)
+                service_id = "notserialized"
                 service = ServiceHandle.local_service(classpath, service_id, instance)
                 variables[fieldname] = service
                 executed = True
@@ -197,7 +197,10 @@ def execute_composition(choreo):
         if not isinstance(handle, ServiceHandle):
             continue
         if not handle.is_remote():
-            store.save(handle.classpath, handle.service, handle.id)
+            if handle.id == "notserialized":
+                handle.id = store.save(handle.classpath, handle.service)
+            else:
+                store.save(handle.classpath, handle.service, handle.id)
 
     if error is not None:
         returnbody = {"error": error}
@@ -262,7 +265,7 @@ def setuplogging(id = 0):
     # TODO get logging lvl from configuration
 
     logging.basicConfig(
-                    level=logging.INFO,
+                    level=logging.DEBUG,
                     format='%(asctime)s %(levelname)-8s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S',
                     filename=logfilepath,

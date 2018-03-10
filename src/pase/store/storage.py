@@ -60,11 +60,11 @@ def save(class_name, instance, id = None):
     # file pointer
     # w overwrites the existing file if the file exists. If the file does not exist, creates a new file for reading and writing.
     starttime = time.time()
-    file_ = open(path, "wb") 
+    file_ = open(path, "wb+") 
 
     # Serialize the object:
     # jsonstring = jsonpickle.encode(instance)
-    pickle.dump(instance, file_)
+    pickle.dump(instance, file_, -1)
 
     # file.write(jsonstring)
     file_.close()
@@ -93,11 +93,20 @@ def restore_state(class_name, id):
     # r opens a file for reading only. 
     starttime = time.time()
     file_ = open(path, "rb") 
-    jsonstring = pickle.load(file_)
-    file_.close()
+    try:
+        service = pickle.load(file_)
+    except EOFError:
+        file_.close()
+        time.sleep(1)
+        # try again..
+        logging.error("Can't load service: " + path)
+        file_ = open(path, "rb") 
+        service = pickle.load(file_)
+    finally:
+        file_.close()
     endtime = time.time()
     logging.debug("Restored object of class {} in {:9.3f} seconds.".format(class_name, (endtime - starttime)))
-    return jsonstring
+    return service
 
 def readfile(path):
     return open(path, "rb")
