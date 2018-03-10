@@ -107,8 +107,8 @@ class NeuralNet:
         optimiser = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(self.cross_entropy)
 
         # define an accuracy assessment operation
-        correct_prediction = tf.equal(tf.argmax(self.y, 1), tf.argmax(self.y_, 1))
-        accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+        #correct_prediction = tf.equal(tf.argmax(self.y, 1), tf.argmax(self.y_, 1))
+        #accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
         # start the session
         with tf.Session() as sess:
@@ -123,6 +123,7 @@ class NeuralNet:
             else:
                 batch_order = list(range(int(total_set_size/batch_size)))
             self.log(f"Starting Training with learning rate = {learning_rate} and batch size = {batch_size} for {epochs} many epochs.")
+            total_avg_cost = 0
             for epoch in range(epochs):
                 avg_cost = 0
                 random.shuffle(batch_order) # shuffle the order in each epoch
@@ -137,9 +138,12 @@ class NeuralNet:
                                 feed_dict={ self.x: arffstruct.input_matrix[batch_start:batch_end],
                                             self.y: arffstruct.output_matrix[batch_start:batch_end]})
                     avg_cost += c / total_set_size
-                #self.log(f"Epoch {epoch+1}: cost = {avg_cost:.3f}")
-            accuracy_result =sess.run(accuracy, feed_dict={self.x : arffstruct.input_matrix, self.y: arffstruct.output_matrix})
-            self.log(f"finished training: accuracy:{accuracy_result}")
+                total_avg_cost += avg_cost/epochs
+
+
+            self.log(f"Total average cost = {total_avg_cost:.3f}")
+            #accuracy_result =sess.run(accuracy, feed_dict={self.x : arffstruct.input_matrix, self.y: arffstruct.output_matrix})
+            #self.log(f"finished training: accuracy:{accuracy_result}")
 
             # save the model
             weights_biases_values = []

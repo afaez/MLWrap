@@ -4,6 +4,8 @@ import uuid
 import pase.constants.error_msg as error
 # import jsonpickle
 import pickle
+import time
+import logging
 
 def _topath(class_name):
     return  "../data/" + class_name
@@ -56,15 +58,18 @@ def save(class_name, instance, id = None):
     # Finish the path.
     path = _tofilepath(class_name, id)
     # file pointer
-    # w+ overwrites the existing file if the file exists. If the file does not exist, creates a new file for reading and writing.
+    # w overwrites the existing file if the file exists. If the file does not exist, creates a new file for reading and writing.
+    starttime = time.time()
     file_ = open(path, "wb+") 
 
     # Serialize the object:
     # jsonstring = jsonpickle.encode(instance)
-    pickle.dump(instance, file_)
+    pickle.dump(instance, file_, -1)
 
     # file.write(jsonstring)
     file_.close()
+    endtime = time.time()
+    logging.debug("Stored object of class {} in {:9.3f} seconds.".format(class_name, (endtime - starttime)))
     
     return id
 
@@ -86,10 +91,22 @@ def restore_state(class_name, id):
     path = _tofilepath(class_name,id)
     # file pointer
     # r opens a file for reading only. 
+    starttime = time.time()
     file_ = open(path, "rb") 
-    jsonstring = pickle.load(file_)
-    file_.close()
-    return jsonstring
+    try:
+        service = pickle.load(file_)
+    except EOFError:
+        file_.close()
+        time.sleep(1)
+        # try again..
+        logging.error("Can't load service: " + path)
+        file_ = open(path, "rb") 
+        service = pickle.load(file_)
+    finally:
+        file_.close()
+    endtime = time.time()
+    logging.debug("Restored object of class {} in {:9.3f} seconds.".format(class_name, (endtime - starttime)))
+    return service
 
 def readfile(path):
     return open(path, "rb")

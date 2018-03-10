@@ -12,6 +12,7 @@ import jsonpickle.ext.numpy as jsonpickle_numpy
 import servicehandler
 import logging
 import os
+import re
 import requests
 import resource
 
@@ -91,9 +92,12 @@ def notifyObserver(requestid):
     message = "Python_Worker_Started:" + str(requestid) + "_" + str(PID)
     observerhost = "localhost:"+str(OBSERVERPORT)
     url = "http://" + observerhost + "/"
-    requests.request("POST", url, data=message, headers={}, timeout= 2)
-    
+    try:
+        requests.request("POST", url, data=message, headers={}, timeout= 2)
+    except Exception:
+        pass
 
+    
 def create_body(variables):
     """ Creates the return body of the given variabeles
     """
@@ -152,7 +156,7 @@ if __name__ == '__main__':
     try:
         import sys
         port_ = int(sys.argv[1]) # port is the first command line argument.
-    except:
+    except Exception:
         pass
 
     #setup logging.
@@ -166,8 +170,3 @@ if __name__ == 'server':
 
     #setup logging.
     servicehandler.setuplogging(PID)
-    try:
-        import sys
-        print()
-    except:
-        pass

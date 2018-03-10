@@ -16,6 +16,8 @@ import re # regular expression used in bodystring_to_bodydict()
 import traceback # for logging stacktraces in compsition execution method
 import compositionclient
 import traceback
+import time
+
 
 def create(class_path, body):
     # Check if requested class is in the configuration whitelist.
@@ -147,7 +149,7 @@ def execute_composition(choreo):
                 pass
         # print(f"executing op\"{operation}\" at index={operatingindex} with inputs={str(operation.args)[0:100]}")
         logging.debug(f"executing op\"{operation}\" at index={operatingindex}") # with inputs={operation.args}")
-
+        starttime = time.time()
         error = None
         instance = None
         # execute rightside function
@@ -168,7 +170,7 @@ def execute_composition(choreo):
                 if  "__construct" != operation.func:
                     path_list.append(operation.func)
                 instance, classpath = reflect.construct(path_list, operation.args)
-                service_id = store.save(classpath, instance)
+                service_id = "notserialized"
                 service = ServiceHandle.local_service(classpath, service_id, instance)
                 variables[fieldname] = service
                 executed = True
@@ -176,8 +178,9 @@ def execute_composition(choreo):
                 # forward
                 # If the class that has to be constructed isn't known/allowed by this server, call the next service:
                 compositionclient.forwardoperation(variables, operatingindex, choreo)
+            endtime = time.time()
 
-            logging.debug(f"success operation index={operatingindex}")
+            logging.debug("Operation execution done in {:9.3f} seconds.".format(endtime - starttime))
         except Exception as ex:
             logging.error(ex, exc_info=True)
             error = traceback.format_exc()
@@ -194,8 +197,10 @@ def execute_composition(choreo):
         if not isinstance(handle, ServiceHandle):
             continue
         if not handle.is_remote():
-            logging.debug(f"Writing {handle} to disk.")
-            store.save(handle.classpath, handle.service, handle.id)
+            if handle.id == "notserialized":
+                handle.id = store.save(handle.classpath, handle.service)
+            else:
+                store.save(handle.classpath, handle.service, handle.id)
 
     if error is not None:
         returnbody = {"error": error}
@@ -232,6 +237,8 @@ def getlogs():
         with open(logfilepath, 'r') as logfile:
             try:
                 contentlist = logfile.readlines()
+            except (KeyboardInterrupt, SystemExit):
+                raise
             except:
                 contentlist = ["Couln't read the log file: {}".format(logfilepath)]
             allcontent[filename] = contentlist

@@ -15,6 +15,9 @@ echo 'Running service... '
 if [ "$1" = "" ]; then # No port was specified.
   set -- "5000"
 fi
+if [ "$2" = "" ]; then # Observer port
+  set -- $1 "9090"
+fi
 # Delete logs
 rm -rf logs
 

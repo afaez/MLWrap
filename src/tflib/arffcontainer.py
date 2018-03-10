@@ -1,5 +1,7 @@
 try:
     from tflib import arff
+except (KeyboardInterrupt, SystemExit):
+    raise
 except:
     import arff
     
@@ -23,6 +25,8 @@ def parse(arff_, is_path = True, dense_mode = True):
             else:
                 mode = arff.LOD
             arff_parsed = arff.load(arff_data, return_type=mode,  encode_nominal=True)
+        except (KeyboardInterrupt, SystemExit):
+            raise
         except: # exception is thrown when sparsed data is loaded in DENSE mode.
             if dense_mode:
                 arff_parsed = parse(arff_, is_path, False)# arff may be in sparse formate
