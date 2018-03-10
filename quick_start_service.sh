@@ -20,4 +20,4 @@ rm -rf logs
 
 # Run service using gunicorn:
 cd "src"
-gunicorn --bind 0.0.0.0:$1 server --workers=10 --timeout 1600 --keep-alive 10
+gunicorn --bind 0.0.0.0:$1 server --workers=4 --timeout 1600 --keep-alive 10

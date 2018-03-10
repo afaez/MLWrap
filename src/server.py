@@ -21,6 +21,10 @@ softLimit= 1024*1024*1024
 hardLimit= 1536*1024*1024
 resource.setrlimit(resource.RLIMIT_AS, (softLimit, hardLimit))
 
+PF=open("timeoutServer.port", "r")
+OBSERVERPORT=int(PF.readline())
+PF.close()
+
 # register handlers for jacksonpickle to be used with numpy.
 jsonpickle_numpy.register_handlers()
 
@@ -85,7 +89,7 @@ def composition_request():
 
 def notifyObserver(requestid):
     message = "Python_Worker_Started:" + str(requestid) + "_" + str(PID)
-    observerhost = "localhost:9090"
+    observerhost = "localhost:"+str(OBSERVERPORT)
     url = "http://" + observerhost + "/"
     requests.request("POST", url, data=message, headers={}, timeout= 2)
     
