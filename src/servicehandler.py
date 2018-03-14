@@ -182,8 +182,11 @@ def execute_composition(choreo):
 
             logging.debug("Operation execution done in {:9.3f} seconds.".format(endtime - starttime))
         except Exception as ex:
-            logging.error(ex, exc_info=True)
+            logging.error("Error occured during execution of operation: {}. Message: {}".format(str(operation), str(ex)))
+            
             error = traceback.format_exc()
+            exceptionextract = error.splitlines()[-3]
+            logging.error("Last line: " + exceptionextract)
             break
         
         
