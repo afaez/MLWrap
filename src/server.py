@@ -15,6 +15,7 @@ import os
 import re
 import requests
 import resource
+import traceback
 
 PID = os.getpid()
 
@@ -77,12 +78,20 @@ def call_method(class_path, id, method_name):
 @application.route("/choreography", methods=['POST'])
 def composition_request():
     # Parse body to json. json_content is true, if content-type is set to 'application/json'.
-    body = parse_jsonbody()
-    choreo = composition.Choreography.fromdict(body)
-    notifyObserver(choreo.requestid)
-    
+    try:
+        body = parse_jsonbody()
+        choreo = composition.Choreography.fromdict(body)
+        notifyObserver(choreo.requestid)
+        
 
-    returnbody = servicehandler.execute_composition(choreo)
+        returnbody = servicehandler.execute_composition(choreo)
+    except Exception as ex:
+        logging.error("Error occured during handling of composition request. Message: {}".format(str(ex)))
+        stacktrace = traceback.format_exc()
+        returnbody = {"error" : stacktrace}
+        exceptionextract = stacktrace.splitlines()[-3]
+        logging.error("Last line: " + exceptionextract)
+
     if "error" in returnbody:
         return returnbody["error"], 400
     else:
