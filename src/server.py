@@ -2,6 +2,7 @@ from flask import Flask
 from flask import request
 from flask_api import status
 import json
+import htmlparser
 from pase import store as store
 from pase import reflect as reflect
 from pase.marshal import unmarshal
@@ -10,9 +11,21 @@ import pase.constants.error_msg as error
 import jsonpickle.ext.numpy as jsonpickle_numpy
 import servicehandler
 import logging
+import os
+import re
+import requests
+import resource
+import traceback
 
-#setup logging.
-servicehandler.setuplogging()
+PID = os.getpid()
+
+softLimit= 1024*1024*1024
+hardLimit= 1536*1024*1024
+resource.setrlimit(resource.RLIMIT_AS, (softLimit, hardLimit))
+
+PF=open("timeoutServer.port", "r")
+OBSERVERPORT=int(PF.readline())
+PF.close()
 
 # register handlers for jacksonpickle to be used with numpy.
 jsonpickle_numpy.register_handlers()
@@ -20,6 +33,10 @@ jsonpickle_numpy.register_handlers()
 # flask application 
 application = Flask(__name__)
 
+@application.route("/logs", methods=['GET'])
+def read_logs():
+    msg = servicehandler.getlogs()
+    return htmlparser.parse(msg)
 
 @application.route("/<class_path>/__construct", methods=['POST'])
 @application.route("/<class_path>", methods=['POST'])
@@ -61,11 +78,35 @@ def call_method(class_path, id, method_name):
 @application.route("/choreography", methods=['POST'])
 def composition_request():
     # Parse body to json. json_content is true, if content-type is set to 'application/json'.
-    body = parse_jsonbody()
-    choreo = composition.Choreography.fromdict(body)
+    try:
+        body = parse_jsonbody()
+        choreo = composition.Choreography.fromdict(body)
+        notifyObserver(choreo.requestid)
+        
 
-    return servicehandler.execute_composition(choreo)
+        returnbody = servicehandler.execute_composition(choreo)
+    except Exception as ex:
+        logging.error("Error occured during handling of composition request. Message: {}".format(str(ex)))
+        stacktrace = traceback.format_exc()
+        returnbody = {"error" : stacktrace}
+        exceptionextract = stacktrace.splitlines()[-3]
+        logging.error("Last line: " + exceptionextract)
 
+    if "error" in returnbody:
+        return returnbody["error"], 400
+    else:
+        return json.dumps(returnbody)
+
+def notifyObserver(requestid):
+    message = "Python_Worker_Started:" + str(requestid) + "_" + str(PID)
+    observerhost = "localhost:"+str(OBSERVERPORT)
+    url = "http://" + observerhost + "/"
+    try:
+        requests.request("POST", url, data=message, headers={}, timeout= 2)
+    except Exception:
+        pass
+
+    
 def create_body(variables):
     """ Creates the return body of the given variabeles
     """
@@ -124,9 +165,17 @@ if __name__ == '__main__':
     try:
         import sys
         port_ = int(sys.argv[1]) # port is the first command line argument.
-    except:
+    except Exception:
         pass
+
+    #setup logging.
+    servicehandler.setuplogging(PID)
+
     # Run the server
     import pase.config
     application.run(host='localhost', port=port_, debug = pase.config.debugging())
 
+if __name__ == 'server':
+
+    #setup logging.
+    servicehandler.setuplogging(PID)

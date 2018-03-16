@@ -1,5 +1,8 @@
 """ Defines usefull mixins that can be extended by wrapper classes.
 """
+import json
+import logging
+from json.decoder import JSONDecodeError
 ATTRIBUTE_BLACKLIST = ["__getstate__", "__setstate__"]
 class DelegateFunctionsMixin(object):
     """ Delegate accesses to a delegate.
@@ -16,6 +19,67 @@ class DelegateFunctionsMixin(object):
             return getattr(self.delegate, name)
         else:
             getattr(super(),name)
+
+
+class BaseOptionsSetterMixin(object):
+    """ Mixin for setting options. 
+    The wrapper inheriting this mixin can either wrap a object that has 'get_params' and 'set_params' methods or specify it by itself.
+    """
+
+    def optionsFromDict(self, kwargs):
+        """ This method invoked the setOptions method by using the first list in keyword arguments.
+        """
+        logging.debug("Setting options: " + str(kwargs))
+        if "$arglist$" in kwargs:
+            for arg in kwargs["$arglist$"]:
+                 if isinstance(arg, list):
+                    # its a string list. invoke set options
+                    self.setOptions(arg)
+        
+
+        for key in kwargs:
+            if key == "$arglist$":
+                continue
+            if isinstance(kwargs[key], list):
+                # its a string list. invoke set options
+                self.setOptions(kwargs[key])
+            else:
+                self.setOption(key, kwargs[key])
+    
+    def setOptions(self, stringlist):
+        """ iterates over the string list and parses each given option and invokes setOption.
+        """
+        for option in stringlist:
+            option = str(option)
+            try:
+                # options contains field and value, like: -a 1
+                splits = option.split(" ", 2)
+                field = splits[0][1:] # use[1:] to cut off the '-'
+                try:
+                    value = json.loads(splits[1])
+                except JSONDecodeError:
+                    value = splits[1]
+
+                self.setOption(field,value)
+                
+            except Exception as e:
+                logging.error("Error {} during setOptions of: {}".format(e, option))
+                pass
+    
+    def setOption(self, field, value):
+        """ Uses the get_params and set_params method to assign the given value to the given field.
+        """
+        if hasattr(self, "get_params") and hasattr(self, "set_params"):
+            if field in self.get_params().keys():
+                #logging.debug("Setting field={} to value={}".format(field,value))
+                self.set_params(**{field:value})
+        # else:
+        #     self.__dict__[field] =  value
+        
+
+
+
+
     
 
 import pase.marshal

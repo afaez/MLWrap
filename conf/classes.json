@@ -2,33 +2,298 @@
     "plainlib.package1.b.B" : {
         "wrapper":"wrappers.bWrap.BWrap"
     },
+
     "plainlib.package1.b.B.random": {
         "classname": "plainlib.package1.b.B"
     },
+
     "$base_sk_classifier_config$":{
-        "wrapper" : "wrappers.sk.WrappedClassifier",
-        "methods": {"train" : {}, "predict" : {"return_type":"StringList"}, "predict_and_score" : {"return_type":"StringList"}}
+        "wrapper" : "wrappers.sk.WrappedClassifier"
     },
-    "sklearn.preprocessing.normalize": {
-        "wrapper" : "wrappers.sk.normalize_labeledinstances"
+    
+    "$basic_sk_classifier_config$":{
+        "extends" : ["$base_sk_classifier_config$"]
+    },
+    "$ensemble_sk_classifier_config$":{
+        "extends" : ["$base_sk_classifier_config$"]
+    },
+    "$meta_sk_classifier_config$":{
+        "extends" : ["$base_sk_classifier_config$"]
+    },
+
+    "sklearn.ensemble.AdaBoostClassifier" : {
+        "extends" : ["$meta_sk_classifier_config$"]
+    },
+    "sklearn.ensemble.BaggingClassifier" : {
+        "extends" : ["$meta_sk_classifier_config$"]
+    },
+
+    "sklearn.mixture.BayesianGaussianMixture" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.naive_bayes.BernoulliNB" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.tree.ExtraTreeClassifier" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.ensemble.ExtraTreesClassifier" : {
+        "extends" : ["$ensemble_sk_classifier_config$"]
+    },
+    "sklearn.naive_bayes.GaussianNB" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.gaussian_process.GaussianProcessClassifier" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.ensemble.GradientBoostingClassifier" : {
+        "extends" : ["$ensemble_sk_classifier_config$"]
+    },
+    "sklearn.neighbors.KNeighborsClassifier" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.neighbors.LSHForest" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.discriminant_analysis.LinearDiscriminantAnalysis" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.svm.LinearSVC" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.linear_model.LogisticRegression" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.linear_model.LogisticRegressionCV" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.naive_bayes.MultinomialNB" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.neighbors.NearestNeighbors" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.svm.NuSVC" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.linear_model.PassiveAggressiveClassifier" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.neighbors.RadiusNeighborsClassifier" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.ensemble.RandomForestClassifier" : {
+        "extends" : ["$ensemble_sk_classifier_config$"]
+    },
+    "sklearn.linear_model.RidgeClassifier" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.linear_model.RidgeClassifierCV" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.linear_model.SGDClassifier" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.svm.SVC" : {
+        "extends" : ["$basic_sk_classifier_config$"]
+    },
+    "sklearn.neural_network.MLPClassifier" : {
+        "extends" : ["$basic_sk_classifier_config$"]
     },
     "sklearn.tree.DecisionTreeClassifier":{
-        "wrapper" : "wrappers.sk.WrappedClassifier"
+        "extends" : ["$basic_sk_classifier_config$"]
     },
-    "sklearn.ensemble.RandomForestClassifier":{
-        "wrapper" : "wrappers.sk.WrappedClassifier"
-    },
-    "sklearn.linear_model.Ridge" : {},
-    "sklearn.linear_model.LinearRegression":{},
 
+
+
+    "$base_sk_pp_config$":{
+        "wrapper" : "wrappers.sk.SkPPWrapper"
+    },
+    "sklearn.decomposition.FastICA":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.feature_selection.GenericUnivariateSelect":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.manifold.Isomap":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.manifold.LocallyLinearEmbedding":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.manifold.MDS":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.decomposition.MiniBatchDictionaryLearning":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.decomposition.NMF":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.feature_selection.SelectFdr":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.feature_selection.SelectFpr":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.feature_selection.SelectFwe":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.feature_selection.SelectKBest":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.feature_selection.SelectPercentile":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.random_projection.SparseRandomProjection":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.manifold.SpectralEmbedding":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.manifold.TSNE":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.feature_selection.VarianceThreshold":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+
+    
+    "sklearn.kernel_approximation.AdditiveChi2Sampler":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.neural_network.BernoulliRBM": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.preprocessing.Binarizer": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.decomposition.DictionaryLearning": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.decomposition.FactorAnalysis": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.random_projection.GaussianRandomProjection": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.covariance.GraphLasso": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.covariance.GraphLassoCV": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
     "sklearn.preprocessing.Imputer": {
-        "wrapper" : "wrappers.sk.ImputerWrapper"
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.preprocessing.KernelCenterer": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.decomposition.LatentDirichletAllocation": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+
+    "sklearn.preprocessing.MaxAbsScaler": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.preprocessing.MinMaxScaler": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.preprocessing.Normalizer": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.preprocessing.QuantileTransformer": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.linear_model.RandomizedLogisticRegression": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.preprocessing.RobustScaler": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.preprocessing.StandardScaler": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.preprocessing.data.PolynomialFeatures":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.cross_decomposition.CCA": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.cluster.FeatureAgglomeration": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
+
+    "$base_sk_pca_config$":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+
+    "sklearn.decomposition.IncrementalPCA":{
+        "extends" : ["$base_sk_pca_config$"]
+    },
+    "sklearn.decomposition.KernelPCA":{
+        "extends" : ["$base_sk_pca_config$"]
+    },
+    "sklearn.decomposition.MiniBatchSparsePCA":{
+        "extends" : ["$base_sk_pca_config$"]
+    },
+    "sklearn.decomposition.PCA":{
+        "extends" : ["$base_sk_pca_config$"]
+    },
+    "sklearn.decomposition.RandomizedPCA":{
+        "extends" : ["$base_sk_pca_config$"]
+    },
+    "sklearn.decomposition.SparsePCA":{
+        "extends" : ["$base_sk_pca_config$"]
+    },
+
+
+    "$clustering_sk_classifier_config$":{
+        "extends" : ["$base_sk_classifier_config$"]
+    },
+
+    "sklearn.cluster.AffinityPropagation":{
+        "extends" : ["$clustering_sk_classifier_config$"]
+    },
+    "sklearn.cluster.Birch":{
+        "extends" : ["$clustering_sk_classifier_config$"]
+    },
+    "sklearn.cluster.KMeans":{
+        "extends" : ["$clustering_sk_classifier_config$"]
+    },
+    "sklearn.cluster.MeanShift":{
+        "extends" : ["$clustering_sk_classifier_config$"]
+    },
+    "sklearn.cluster.MiniBatchKMeans":{
+        "extends" : ["$clustering_sk_classifier_config$"]
+    },
+    "sklearn.neighbors.NearestCentroid":{
+        "extends" : ["$clustering_sk_classifier_config$"]
+    },
+
+    "$base_sk_kernel_pp_config$":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.kernel_approximation.Nystroem" : {
+        "extends" : ["$base_sk_kernel_pp_config$"]
+    },
+    "sklearn.kernel_approximation.RBFSampler" : {
+        "extends" : ["$base_sk_kernel_pp_config$"]
+    },
+    "sklearn.kernel_approximation.SkewedChi2Sampler" : {
+        "extends" : ["$base_sk_kernel_pp_config$"]
+    },
+
+
+
+    "sklearn.preprocessing.normalize": {
+        "wrapper" : "wrappers.sk.normalize_labeledinstances"
     },
     "tflib.NeuralNet" : {
         "classname": "tflib.neuralnet.NeuralNet",
         "wrapper" : "wrappers.tf.WrappedNeuralNet"
-    },
-    "sklearn.neural_network.MLPClassifier" : {
-        "wrapper" : "wrappers.sk.WrappedNumClassifier"
     }
 }

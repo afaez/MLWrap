@@ -15,6 +15,9 @@ import logging
 import re # regular expression used in bodystring_to_bodydict()
 import traceback # for logging stacktraces in compsition execution method
 import compositionclient
+import traceback
+import time
+
 
 def create(class_path, body):
     # Check if requested class is in the configuration whitelist.
@@ -146,7 +149,8 @@ def execute_composition(choreo):
                 pass
         # print(f"executing op\"{operation}\" at index={operatingindex} with inputs={str(operation.args)[0:100]}")
         logging.debug(f"executing op\"{operation}\" at index={operatingindex}") # with inputs={operation.args}")
-
+        starttime = time.time()
+        error = None
         instance = None
         # execute rightside function
         try:
@@ -166,7 +170,7 @@ def execute_composition(choreo):
                 if  "__construct" != operation.func:
                     path_list.append(operation.func)
                 instance, classpath = reflect.construct(path_list, operation.args)
-                service_id = store.save(classpath, instance)
+                service_id = "notserialized"
                 service = ServiceHandle.local_service(classpath, service_id, instance)
                 variables[fieldname] = service
                 executed = True
@@ -174,10 +178,17 @@ def execute_composition(choreo):
                 # forward
                 # If the class that has to be constructed isn't known/allowed by this server, call the next service:
                 compositionclient.forwardoperation(variables, operatingindex, choreo)
+            endtime = time.time()
 
-            logging.debug(f"success operation index={operatingindex}")
+            logging.debug("Operation execution done in {:9.3f} seconds.".format(endtime - starttime))
         except Exception as ex:
-            logging.error(ex, exc_info=True)
+            logging.error("Error occured during execution of operation: {}. Message: {}".format(str(operation), str(ex)))
+            
+            error = traceback.format_exc()
+            exceptionextract = error.splitlines()[-3]
+            logging.error("Last line: " + exceptionextract)
+            break
+        
         
         # logging.debug(f"state after op:{variables}")
 
@@ -189,8 +200,14 @@ def execute_composition(choreo):
         if not isinstance(handle, ServiceHandle):
             continue
         if not handle.is_remote():
-            logging.debug(f"Writing {handle} to disk.")
-            store.save(handle.classpath, handle.service, handle.id)
+            if handle.id == "notserialized":
+                handle.id = store.save(handle.classpath, handle.service)
+            else:
+                store.save(handle.classpath, handle.service, handle.id)
+
+    if error is not None:
+        returnbody = {"error": error}
+        return returnbody
 
     return_variables = {}
 
@@ -206,24 +223,58 @@ def execute_composition(choreo):
 
 
     # print("Returning : " + str(returnbody)[0:3000])
-    return json.dumps(returnbody)
+    return returnbody
 
-def setuplogging():
+def getlogs():
+    import os.path
+    import os
+    directory_in_str = '../logs'
+    if not os.path.isdir(directory_in_str):
+        return "Error: no log folder found."
+
+    directory = os.fsencode(directory_in_str)
+    allcontent = {}
+    for file in os.listdir(directory):
+        filename = os.fsdecode(file)
+        logfilepath = os.path.join(directory_in_str, filename)
+        with open(logfilepath, 'r') as logfile:
+            try:
+                contentlist = logfile.readlines()
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except:
+                contentlist = ["Couln't read the log file: {}".format(logfilepath)]
+            allcontent[filename] = contentlist
+    return allcontent
+
+
+
+    
+
+def setuplogging(id = 0):
     """ Takes care of setting up the logging. If this method isn't used, 'WARNING' logs will be printed to stdout. 
     """
-    import datetime
-    now  = datetime.datetime.now()
     import pathlib
     # directory where the logs are collected
     directory = '../logs'
     # create log directory if it doesn't exist
     pathlib.Path(directory).mkdir(parents=True, exist_ok=True) 
     # logfile  path definition
-    logfilepath = directory + "/pase_{}.log".format(now.strftime("%Y-%m-%d_%H-%M-%S"))
-    print("logging in " + logfilepath)
+    # logfilename = "/pase_{}.log".format(now.strftime("%Y-%m-%d_%H-%M-%S"))
+    logfilename = "/pase_{}.log"
+    logfilepath = directory + logfilename.format(id)
+
     # logs will be written to the ^ upper ^ logfile.
     # TODO get logging lvl from configuration
-    logging.basicConfig(filename=logfilepath,level=logging.DEBUG) 
+
+    logging.basicConfig(
+                    level=logging.DEBUG,
+                    format='%(asctime)s %(levelname)-8s %(message)s',
+                    datefmt='%a, %d %b %Y %H:%M:%S',
+                    filename=logfilepath,
+                    filemode='w')
+
+    print("logging into " + logfilepath)
 
 def bodystring_to_bodydict(body_string):
     """ Creates a dictionary object from a string. 

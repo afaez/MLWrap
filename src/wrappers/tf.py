@@ -8,6 +8,7 @@ import jsonpickle.handlers
 from tflib.neuralnet import NeuralNet
 from tflib.arffcontainer import ArffStructure
 
+
 class NeuralNetHandler(jsonpickle.handlers.BaseHandler):    
     # handler for jsonpickle to save a neuralnet object
     def flatten(self, obj, data):
@@ -36,8 +37,7 @@ class NeuralNetHandler(jsonpickle.handlers.BaseHandler):
 # Register this handler for the class
 jsonpickle.handlers.registry.register(NeuralNet, NeuralNetHandler)
 
-
-class WrappedNeuralNet(wrappercore.BaseClassifierMixin):
+class WrappedNeuralNet(wrappercore.BaseClassifierMixin, wrappercore.BaseOptionsSetterMixin):
     """ Wrapper for neuralnet module in tflib.
     Offers our standard methods: declare_classes, train and predict
     declare_classes has the signature: declare_classes(LabeledInstances)::void
@@ -46,16 +46,35 @@ class WrappedNeuralNet(wrappercore.BaseClassifierMixin):
     Classifiers can deal with classes as strings themselves.
     """
     model_values = None
+    layer_count = 2
+    epochs = 100
+    learning_rate = 0.3
+    batch_size = 900
     def __init__(self, wrappedclass_module, kwargs):
         # wrappedinstance  = wrappedclass_module(**kwargs) 
         # initialize the DelegateFunctionsMixin with the created wrapped object.
-        if(isinstance(kwargs, dict)): # its called from wrappedreflector
-            self.layer_count = kwargs["layers_count"]
-        else:
-            self.layer_count = kwargs 
+
+        wrappercore.BaseOptionsSetterMixin.optionsFromDict(self, kwargs)
         self.trained = False
             
-        
+    def get_params(self):
+        return {
+            "layer_count" : self.layer_count,
+            "epochs" : self.epochs,
+            "learning_rate" : self.learning_rate,
+            "batch_size" : self.batch_size
+        }
+    
+    def set_params(self, **parameterdict):
+        if "layer_count" in parameterdict:
+            self.layer_count = int(parameterdict["layer_count"])
+        if "epochs" in parameterdict:
+            self.epochs = int(parameterdict["epochs"])
+        if "learning_rate" in parameterdict:
+            self.learning_rate = float(parameterdict["learning_rate"])
+        if "batch_size" in parameterdict:
+            self.layer_count = int(parameterdict["batch_size"])
+
 
 
     def create_nn(self):
@@ -126,7 +145,7 @@ class WrappedNeuralNet(wrappercore.BaseClassifierMixin):
 
         # now train the neural net
         neuralnet = self.create_nn()
-        self.model_values = neuralnet.nn_train(arffstruct = arffstruct)
+        self.model_values = neuralnet.nn_train(arffstruct = arffstruct, epochs = self.epochs, learning_rate = self.learning_rate, batch_size = self.batch_size)
         self.trained = True
 
     def predict(self, X):
@@ -151,20 +170,3 @@ class WrappedNeuralNet(wrappercore.BaseClassifierMixin):
         prediction = neuralnet.nn_predict(arffstruct)
         dataobject = PASEDataObject("StringList", prediction)
         return dataobject
-    
-
-
-    
-
-    
-
-
-
-        
-
-
-
-
-
-            
-        

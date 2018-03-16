@@ -76,3 +76,26 @@ def check_type(type_string):
     """ Checks the given type string.
     """
     return True # TODO implement typing system
+
+def check_inheritance(base_name, super_name):
+    baseDef = getclassesdirectoryentry(base_name)
+    
+    if base_name == super_name:
+        return True
+
+    if "extends" in baseDef:
+        if super_name in baseDef["extends"]:
+            return True
+        else:
+            for parent in baseDef["extends"]:
+                if check_inheritance(parent, super_name):
+                    return True
+
+    return False
+
+def allsubtypes(super_name, ignore_superficial_types=True):
+    for base_name in configuration.CLASSES_DICT:
+        if ignore_superficial_types and base_name[0] == '$':
+            continue
+        if check_inheritance(base_name, super_name):
+            yield base_name

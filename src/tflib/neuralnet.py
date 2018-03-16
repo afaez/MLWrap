@@ -20,7 +20,7 @@ class NeuralNet:
         self._log = log
         self.in_size = in_size
         self.out_size = out_size
-        self.layers_count = layers_count
+        self.layers_count = int(layers_count)
 
 
     def nn_create(self, deviation = 0.1, load = False, weights_biases_values = []):
@@ -92,10 +92,10 @@ class NeuralNet:
                         axis=1), name = "cross_entropy")
 
         
-        ##self.sum_square = tf.reduce_sum(tf.square(self.y_ - self.y)) # Use minimize cross entropy instead
+        # self.sum_square = tf.reduce_sum(tf.square(self.y_ - self.y)) # Use minimize cross entropy instead
     # END OF CREATE FUNCITON
 
-    def nn_train(self, arffstruct, epochs = 10, learning_rate = 0.15, batch_size = 30):
+    def nn_train(self, arffstruct, epochs = 1000, learning_rate = 0.3, batch_size = 900):
         """ Trains the neural net with data from arffstruct, which is a arffcontainer.ArffStructur instance.
             load: boolean, if true, nn_train first restores the net weights and biases from previous checkpoint from the given path.
             path: path of the tensorflow checkpoint folder, to restore when load is True. Also used to store the net at the end of the training
@@ -107,8 +107,8 @@ class NeuralNet:
         optimiser = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(self.cross_entropy)
 
         # define an accuracy assessment operation
-        correct_prediction = tf.equal(tf.argmax(self.y, 1), tf.argmax(self.y_, 1))
-        accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+        #correct_prediction = tf.equal(tf.argmax(self.y, 1), tf.argmax(self.y_, 1))
+        #accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
         # start the session
         with tf.Session() as sess:
@@ -123,6 +123,7 @@ class NeuralNet:
             else:
                 batch_order = list(range(int(total_set_size/batch_size)))
             self.log(f"Starting Training with learning rate = {learning_rate} and batch size = {batch_size} for {epochs} many epochs.")
+            total_avg_cost = 0
             for epoch in range(epochs):
                 avg_cost = 0
                 random.shuffle(batch_order) # shuffle the order in each epoch
@@ -137,9 +138,12 @@ class NeuralNet:
                                 feed_dict={ self.x: arffstruct.input_matrix[batch_start:batch_end],
                                             self.y: arffstruct.output_matrix[batch_start:batch_end]})
                     avg_cost += c / total_set_size
-                #self.log(f"Epoch {epoch+1}: cost = {avg_cost:.3f}")
-            accuracy_result =sess.run(accuracy, feed_dict={self.x : arffstruct.input_matrix, self.y: arffstruct.output_matrix})
-            self.log(f"accuracy:{accuracy_result}")
+                total_avg_cost += avg_cost/epochs
+
+
+            self.log(f"Total average cost = {total_avg_cost:.3f}")
+            #accuracy_result =sess.run(accuracy, feed_dict={self.x : arffstruct.input_matrix, self.y: arffstruct.output_matrix})
+            #self.log(f"finished training: accuracy:{accuracy_result}")
 
             # save the model
             weights_biases_values = []
@@ -204,8 +208,9 @@ def nodes_count_formula(layers_count, in_count, out_count, layer_index):
     # m : gradient is calculated: (y2-y1)/(x2-x1), x1(first layer), y1 = in_count, x2(last layer), y2 = out_count
     # c : contant. is in_count.
     """
-    m = ((math.sqrt(out_count) - math.sqrt(in_count)))/layers_count 
-    c = math.sqrt(in_count)
-    nodes_count = 2 * int((m * (layer_index+1)) + c + 0.5)  
-    return nodes_count 
+    return int((in_count + out_count) / 2)
+    # m = ((math.sqrt(out_count) - math.sqrt(in_count)))/layers_count 
+    # c = math.sqrt(in_count)
+    # nodes_count = 2 * int((m * (layer_index+1)) + c + 0.5)  
+    # return nodes_count 
 
