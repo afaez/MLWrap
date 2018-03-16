@@ -238,4 +238,4 @@ def write_skript(predicatefilename = "predicates.txt", scriptname = "script.txt"
 if __name__ == "__main__": 
     # for classpath in pase.config.lookup.allsubtypes("$basic_sk_classifier_config$"):
     #     print(classpath)
-    write_skript("predicate_clustering.txt" ,"sl_clustering_cl.methods", "classifier", "clustering", "$base_sk_classifier_config$")
+    write_skript("predicate_clustering.txt" ,"sl_clustering_cl.methods", "classifier", "clustering", "$clustering_sk_classifier_config$")

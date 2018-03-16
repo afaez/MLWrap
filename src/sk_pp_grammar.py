@@ -41,12 +41,12 @@ def getjavaSource_OptionsPredicate():
 def getjavaSource_NumericalOption():
     return """
     package de.upb.crc901.mlplan.evaluablepredicates.mlplan.{package1}.{package2}.{classname};
-    /*
-    {doc}
-    */
 
     import de.upb.crc901.mlplan.evaluablepredicates.mlplan.NumericRangeOptionPredicate;
 
+    /*
+    {doc}
+    */
     public class {javaClassName} extends NumericRangeOptionPredicate {{
         
         @Override
@@ -68,6 +68,11 @@ def getjavaSource_NumericalOption():
         protected boolean needsIntegers() {{
             return {needsInt};
         }}
+
+        @Override
+        protected boolean isLinear() {{
+			return true;
+		}}
     }}
     """
 
@@ -92,7 +97,7 @@ def getjavaSource_BoolOption():
     }}
     """
 
-def write_skript(predicatefilename = "predicates.txt", scriptname = "script.txt", package1 = "pp", package2 = "as", configsupertype = "sklearn.cross_decomposition.CCA"):
+def write_skript(predicatefilename = "predicates.txt", scriptname = "script.txt", package1 = "pp", package2 = "kernelapprox", configsupertype = "$base_sk_kernel_pp_config$"):
     classpath = "sklearn.ensemble.RandomForestClassifier"
     genfolder = "../../_gen/"
     predicatefilename = genfolder + predicatefilename

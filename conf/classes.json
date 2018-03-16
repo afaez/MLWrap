@@ -223,6 +223,9 @@
     "sklearn.cross_decomposition.CCA": {
         "extends" : ["$base_sk_pp_config$"]
     },
+    "sklearn.cluster.FeatureAgglomeration": {
+        "extends" : ["$base_sk_pp_config$"]
+    },
 
     "$base_sk_pca_config$":{
         "extends" : ["$base_sk_pp_config$"]
