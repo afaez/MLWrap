@@ -41,33 +41,41 @@ def getjavaSource_OptionsPredicate():
 def getjavaSource_NumericalOption():
     return """
     package de.upb.crc901.mlplan.evaluablepredicates.mlplan.{package1}.{package2}.{classname};
-    /*
-    {doc}
-    */
 
     import de.upb.crc901.mlplan.evaluablepredicates.mlplan.NumericRangeOptionPredicate;
 
+    /*
+    {doc}
+    */
     public class {javaClassName} extends NumericRangeOptionPredicate {{
         
         @Override
         protected double getMin() {{
-            return 1;
+            return 1
+                ;
         }}
 
         @Override
         protected double getMax() {{
-            return 1;
+            return 1
+                ;
         }}
 
         @Override
         protected int getSteps() {{
-            return -1;
+            return -1
+                ;
         }}
 
         @Override
         protected boolean needsIntegers() {{
-            return {needsInt};
+            return {needsInt}; // already set by generator
         }}
+
+        @Override
+        protected boolean isLinear() {{
+			return true;
+		}}
     }}
     """
 
@@ -83,7 +91,7 @@ def getjavaSource_BoolOption():
     */
     public class {javaClassName} extends OptionsPredicate {{
         
-        private static List<Object> validValues = Arrays.asList(new Object[]{{"true", "false"}});
+        private static List<Object> validValues = Arrays.asList(new Object[]{{}});
 
         @Override
         protected List<? extends Object> getValidValues() {{
@@ -104,7 +112,13 @@ def write_skript(predicatefilename = "predicates.txt", scriptname = "script.txt"
     for classpath in pase.config.lookup.allsubtypes(configsupertype):
         pckgSplit = classpath.split(".")
         clazz = traverse_package(pckgSplit)
+        if(clazz == None):
+            print("couldnt find {}".format(classpath))
+            continue
         obj = clazz()
+        if not (hasattr(obj, "fit") and hasattr(obj, "predict")):
+            print("{}".format(classpath))
+            continue 
         params = obj.get_params()
         classname = pckgSplit[-1]
 
@@ -224,6 +238,4 @@ def write_skript(predicatefilename = "predicates.txt", scriptname = "script.txt"
 if __name__ == "__main__": 
     # for classpath in pase.config.lookup.allsubtypes("$basic_sk_classifier_config$"):
     #     print(classpath)
-    write_skript("predicate_basic.txt" ,"sl_basic_cl.methods", "classifier", "basic", "$basic_sk_classifier_config$")
-    write_skript("predicate_ensemble.txt" ,"sl_ensemble_cl.methods", "classifier", "ensemble", "$ensemble_sk_classifier_config$")
-    write_skript("predicate_meta.txt" ,"sl_meta_cl.methods", "classifier", "meta", "$meta_sk_classifier_config$")
+    write_skript("predicate_clustering.txt" ,"sl_clustering_cl.methods", "classifier", "clustering", "$base_sk_classifier_config$")

@@ -92,7 +92,7 @@ def getjavaSource_BoolOption():
     }}
     """
 
-def write_skript(predicatefilename = "predicates.txt", scriptname = "script.txt", package1 = "pp", package2 = "as", configsupertype = "$base_sk_pp_config$"):
+def write_skript(predicatefilename = "predicates.txt", scriptname = "script.txt", package1 = "pp", package2 = "as", configsupertype = "sklearn.cross_decomposition.CCA"):
     classpath = "sklearn.ensemble.RandomForestClassifier"
     genfolder = "../../_gen/"
     predicatefilename = genfolder + predicatefilename

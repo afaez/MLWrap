@@ -79,6 +79,10 @@ def check_type(type_string):
 
 def check_inheritance(base_name, super_name):
     baseDef = getclassesdirectoryentry(base_name)
+    
+    if base_name == super_name:
+        return True
+
     if "extends" in baseDef:
         if super_name in baseDef["extends"]:
             return True
