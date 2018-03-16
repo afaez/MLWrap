@@ -217,6 +217,92 @@
     "sklearn.preprocessing.StandardScaler": {
         "extends" : ["$base_sk_pp_config$"]
     },
+    "sklearn.preprocessing.data.PolynomialFeatures":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+
+
+    "$base_sk_pca_config$":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+
+    "sklearn.decomposition.IncrementalPCA":{
+        "extends" : ["$base_sk_pca_config$"]
+    },
+    "sklearn.decomposition.KernelPCA":{
+        "extends" : ["$base_sk_pca_config$"]
+    },
+    "sklearn.decomposition.MiniBatchSparsePCA":{
+        "extends" : ["$base_sk_pca_config$"]
+    },
+    "sklearn.decomposition.PCA":{
+        "extends" : ["$base_sk_pca_config$"]
+    },
+    "sklearn.decomposition.RandomizedPCA":{
+        "extends" : ["$base_sk_pca_config$"]
+    },
+    "sklearn.decomposition.SparsePCA":{
+        "extends" : ["$base_sk_pca_config$"]
+    },
+
+
+    "$base_sk_clustering_config$":{
+        "extends" : ["$base_sk_classifier_config$"]
+    },
+
+    "sklearn.cluster.AffinityPropagation":{
+        "extends" : ["$base_sk_clustering_config$"]
+    },
+    "sklearn.cluster.AgglomerativeClustering":{
+        "extends" : ["$base_sk_clustering_config$"]
+    },
+    "sklearn.cluster.DBSCAN":{
+        "extends" : ["$base_sk_clustering_config$"]
+    },
+    "sklearn.cluster.Birch":{
+        "extends" : ["$base_sk_clustering_config$"]
+    },
+    "sklearn.cluster.CCA":{
+        "extends" : ["$base_sk_clustering_config$"]
+    },
+    "sklearn.cluster.FeatureAgglomeration":{
+        "extends" : ["$base_sk_clustering_config$"]
+    },
+    "sklearn.cluster.KMeans":{
+        "extends" : ["$base_sk_clustering_config$"]
+    },
+    "sklearn.cluster.MeanShift":{
+        "extends" : ["$base_sk_clustering_config$"]
+    },
+    "sklearn.cluster.MiniBatchKMeans":{
+        "extends" : ["$base_sk_clustering_config$"]
+    },
+    "sklearn.cluster.NearestCentroid":{
+        "extends" : ["$base_sk_clustering_config$"]
+    },
+    "sklearn.cluster.SpectralBiclustering":{
+        "extends" : ["$base_sk_clustering_config$"]
+    },
+    "sklearn.cluster.SpectralClustering":{
+        "extends" : ["$base_sk_clustering_config$"]
+    },
+    "sklearn.cluster.SpectralCoclustering":{
+        "extends" : ["$base_sk_clustering_config$"]
+    },
+
+    "$base_sk_kernel_pp_config$":{
+        "extends" : ["$base_sk_pp_config$"]
+    },
+    "sklearn.kernel_approximation.Nystroem" : {
+        "extends" : ["$base_sk_kernel_pp_config$"]
+    },
+    "sklearn.kernel_approximation.RBFSampler" : {
+        "extends" : ["$base_sk_kernel_pp_config$"]
+    },
+    "sklearn.kernel_approximation.SkewedChi2Sampler" : {
+        "extends" : ["$base_sk_kernel_pp_config$"]
+    },
+
 
 
     "sklearn.preprocessing.normalize": {
